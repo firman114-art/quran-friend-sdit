@@ -5,6 +5,7 @@ export interface User {
   name: string;
   role: UserRole;
   kelas?: string;
+  noHpOrtu?: string;
 }
 
 export type TilawahKategori = 'Jilid 1' | 'Jilid 2' | 'Jilid 3' | 'Jilid 4' | 'Jilid 5' | 'Tajwid' | 'Ghorib';
