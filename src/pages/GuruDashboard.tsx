@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, LogOut, Users, ClipboardList, Plus } from 'lucide-react';
+import { BookOpen, LogOut, Users, ClipboardList, Plus, UserPlus } from 'lucide-react';
 import DailyInputForm from '@/components/DailyInputForm';
+import AddStudentForm from '@/components/AddStudentForm';
 
 interface SiswaRow {
   id: string;
