@@ -137,7 +137,9 @@ const SiswaDashboard = () => {
                 <div key={r.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                   <div>
                     <p className="font-medium text-sm text-foreground">{r.tahfidzSurah} (Ayat {r.tahfidzAyat})</p>
-                    <p className="text-xs text-muted-foreground">{r.tanggal} • {r.tilpiKategori} Hal. {r.tilpiHalaman}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {r.tanggal} • {r.tahfidzJuz ? `Juz ${r.tahfidzJuz} • ` : ''}{r.tilpiKategori} Hal. {r.tilpiHalaman}
+                    </p>
                   </div>
                   <Badge className={`text-xs ${getStatusColor(r.status)}`}>{r.status}</Badge>
                 </div>
