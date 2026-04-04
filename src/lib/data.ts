@@ -56,12 +56,12 @@ export const TILAWAH_KATEGORI: TilawahKategori[] = [
 export const STATUS_OPTIONS: Status[] = ['Lancar', 'Perlu Mengulang', 'Murajaah'];
 
 const DEMO_STUDENTS: User[] = [
-  { id: 's1', name: 'Ahmad Fauzan', role: 'siswa', kelas: '5A' },
-  { id: 's2', name: 'Aisyah Putri', role: 'siswa', kelas: '5A' },
-  { id: 's3', name: 'Muhammad Rizki', role: 'siswa', kelas: '5A' },
-  { id: 's4', name: 'Fatimah Zahra', role: 'siswa', kelas: '5B' },
-  { id: 's5', name: 'Umar Hadi', role: 'siswa', kelas: '5B' },
-  { id: 's6', name: 'Khadijah Nur', role: 'siswa', kelas: '5B' },
+  { id: 's1', name: 'Ahmad Fauzan', role: 'siswa', kelas: '5A', noHpOrtu: '6281234567001' },
+  { id: 's2', name: 'Aisyah Putri', role: 'siswa', kelas: '5A', noHpOrtu: '6281234567002' },
+  { id: 's3', name: 'Muhammad Rizki', role: 'siswa', kelas: '5A', noHpOrtu: '6281234567003' },
+  { id: 's4', name: 'Fatimah Zahra', role: 'siswa', kelas: '5B', noHpOrtu: '6281234567004' },
+  { id: 's5', name: 'Umar Hadi', role: 'siswa', kelas: '5B', noHpOrtu: '6281234567005' },
+  { id: 's6', name: 'Khadijah Nur', role: 'siswa', kelas: '5B', noHpOrtu: '6281234567006' },
 ];
 
 const DEMO_RECORDS: DailyRecord[] = [
