@@ -17,6 +17,7 @@ export interface DailyRecord {
   tanggal: string;
   tilpiKategori: TilawahKategori;
   tilpiHalaman: number;
+  tahfidzJuz?: number;
   tahfidzSurah: string;
   tahfidzAyat: string;
   status: Status;

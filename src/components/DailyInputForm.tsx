@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { saveRecord, TILAWAH_KATEGORI, SURAH_LIST, STATUS_OPTIONS, type User, type TilawahKategori, type Status, type DailyRecord } from '@/lib/data';
+import { saveRecord, TILAWAH_KATEGORI, STATUS_OPTIONS, type User, type TilawahKategori, type Status, type DailyRecord } from '@/lib/data';
+import { JUZ_DATA, getSurahByJuz } from '@/lib/quran-data';
 import { X, Save, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,6 +31,7 @@ function buildWhatsAppMessage(student: User, record: DailyRecord): string {
     `   Halaman: ${record.tilpiHalaman}`,
     ``,
     `🕌 *Tahfidz:*`,
+    `   Juz: ${record.tahfidzJuz || '-'}`,
     `   Surah: ${record.tahfidzSurah}`,
     `   Ayat: ${record.tahfidzAyat}`,
     ``,
@@ -41,7 +43,6 @@ function buildWhatsAppMessage(student: User, record: DailyRecord): string {
   }
 
   lines.push(``, `_Semoga Allah memudahkan hafalan ananda. Jazakumullahu khairan._`);
-
   return lines.join('\n');
 }
 
@@ -55,14 +56,28 @@ const DailyInputForm = ({ student, onClose }: Props) => {
   const { toast } = useToast();
   const [tilpiKategori, setTilpiKategori] = useState<TilawahKategori>('Jilid 1');
   const [tilpiHalaman, setTilpiHalaman] = useState('');
+  const [selectedJuz, setSelectedJuz] = useState('');
   const [tahfidzSurah, setTahfidzSurah] = useState('');
   const [tahfidzAyat, setTahfidzAyat] = useState('');
   const [status, setStatus] = useState<Status>('Lancar');
   const [catatan, setCatatan] = useState('');
   const [savedRecord, setSavedRecord] = useState<DailyRecord | null>(null);
 
+  const availableSurah = selectedJuz ? getSurahByJuz(parseInt(selectedJuz)) : [];
+
+  const handleJuzChange = (juz: string) => {
+    setSelectedJuz(juz);
+    setTahfidzSurah('');
+    setTahfidzAyat('');
+  };
+
+  const handleSurahChange = (surah: string) => {
+    setTahfidzSurah(surah);
+    setTahfidzAyat('');
+  };
+
   const handleSubmit = () => {
-    if (!tilpiHalaman || !tahfidzSurah || !tahfidzAyat) {
+    if (!tilpiHalaman || !selectedJuz || !tahfidzSurah || !tahfidzAyat) {
       toast({ title: 'Lengkapi semua field!', variant: 'destructive' });
       return;
     }
@@ -73,6 +88,7 @@ const DailyInputForm = ({ student, onClose }: Props) => {
       tanggal: new Date().toISOString().split('T')[0],
       tilpiKategori,
       tilpiHalaman: parseInt(tilpiHalaman),
+      tahfidzJuz: parseInt(selectedJuz),
       tahfidzSurah,
       tahfidzAyat,
       status,
@@ -165,27 +181,52 @@ const DailyInputForm = ({ student, onClose }: Props) => {
             </div>
           </div>
 
-          {/* Tahfidz Section */}
+          {/* Tahfidz Section - 3 cascading selects */}
           <div className="p-3 rounded-lg bg-secondary">
             <p className="font-semibold text-sm text-secondary-foreground mb-3">🕌 Tahfidz</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
+              {/* Juz */}
               <div>
-                <Label className="text-xs">Surah</Label>
-                <Select value={tahfidzSurah} onValueChange={setTahfidzSurah}>
-                  <SelectTrigger><SelectValue placeholder="Pilih..." /></SelectTrigger>
+                <Label className="text-xs">Juz</Label>
+                <Select value={selectedJuz} onValueChange={handleJuzChange}>
+                  <SelectTrigger><SelectValue placeholder="Pilih Juz..." /></SelectTrigger>
                   <SelectContent>
-                    {SURAH_LIST.map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    {JUZ_DATA.map(j => (
+                      <SelectItem key={j.nomor} value={String(j.nomor)}>
+                        Juz {j.nomor}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Surah - filtered by Juz */}
+              <div>
+                <Label className="text-xs">Surah</Label>
+                <Select
+                  value={tahfidzSurah}
+                  onValueChange={handleSurahChange}
+                  disabled={!selectedJuz}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={selectedJuz ? 'Pilih Surah...' : 'Pilih Juz dulu'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSurah.map(s => (
+                      <SelectItem key={s.nama} value={s.nama}>{s.nama}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Ayat */}
               <div>
                 <Label className="text-xs">Ayat</Label>
                 <Input
-                  placeholder="1-7"
+                  placeholder="Contoh: 1-7"
                   value={tahfidzAyat}
                   onChange={e => setTahfidzAyat(e.target.value)}
+                  disabled={!tahfidzSurah}
                 />
               </div>
             </div>
