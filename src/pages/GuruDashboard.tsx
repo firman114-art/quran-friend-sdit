@@ -37,6 +37,7 @@ const GuruDashboard = () => {
   const [records, setRecords] = useState<RecordRow[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<SiswaRow | null>(null);
+  const [showAddStudent, setShowAddStudent] = useState(false);
 
   useEffect(() => {
     if (!loading && (!profile || profile.role !== 'guru')) {
