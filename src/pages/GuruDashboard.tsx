@@ -1,33 +1,72 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getStudents, getRecords, getCurrentUser, setCurrentUser, type User } from '@/lib/data';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, LogOut, Users, ClipboardList, Plus } from 'lucide-react';
 import DailyInputForm from '@/components/DailyInputForm';
 
+interface SiswaRow {
+  id: string;
+  user_id: string;
+  nama: string;
+  kelas: string;
+  no_hp_ortu: string | null;
+}
+
+interface RecordRow {
+  id: string;
+  siswa_id: string;
+  tanggal: string;
+  tilpi_kategori: string;
+  tilpi_halaman: number;
+  tahfidz_juz: number | null;
+  tahfidz_surah: string;
+  tahfidz_ayat: string;
+  status: string;
+  catatan: string | null;
+}
+
 const GuruDashboard = () => {
   const navigate = useNavigate();
-  const user = getCurrentUser();
-  const students = getStudents();
-  const records = getRecords();
+  const { profile, guruData, signOut, loading } = useAuth();
+  const [students, setStudents] = useState<SiswaRow[]>([]);
+  const [records, setRecords] = useState<RecordRow[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<SiswaRow | null>(null);
 
-  if (!user || user.role !== 'guru') {
-    navigate('/');
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && (!profile || profile.role !== 'guru')) {
+      navigate('/');
+    }
+  }, [loading, profile, navigate]);
 
-  const handleLogout = () => {
-    setCurrentUser(null);
+  useEffect(() => {
+    if (profile?.role === 'guru') {
+      fetchData();
+    }
+  }, [profile]);
+
+  const fetchData = async () => {
+    const [studentsRes, recordsRes] = await Promise.all([
+      supabase.from('siswa').select('*').order('nama'),
+      supabase.from('daily_records').select('*').order('tanggal', { ascending: false }),
+    ]);
+    if (studentsRes.data) setStudents(studentsRes.data);
+    if (recordsRes.data) setRecords(recordsRes.data);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
 
+  if (loading || !profile || !guruData) return null;
+
   const getStudentLatestRecord = (studentId: string) => {
-    const studentRecords = records.filter(r => r.siswaId === studentId);
-    return studentRecords.length > 0 ? studentRecords[studentRecords.length - 1] : null;
+    return records.find(r => r.siswa_id === studentId) || null;
   };
 
   const getStatusColor = (status: string) => {
@@ -44,14 +83,13 @@ const GuruDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="gradient-hero text-primary-foreground">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BookOpen className="w-6 h-6" />
             <div>
               <h1 className="font-bold text-lg">Dashboard Guru</h1>
-              <p className="text-xs opacity-80">Assalamu'alaikum, {user.name}</p>
+              <p className="text-xs opacity-80">Assalamu'alaikum, {guruData.nama}</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={handleLogout} className="text-primary-foreground hover:bg-primary-foreground/20">
@@ -61,7 +99,6 @@ const GuruDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4 text-center">
@@ -86,7 +123,6 @@ const GuruDashboard = () => {
           </Card>
         </div>
 
-        {/* Student List */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -95,47 +131,51 @@ const GuruDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {students.map(student => {
-              const latest = getStudentLatestRecord(student.id);
-              return (
-                <div
-                  key={student.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium text-sm text-foreground">{student.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Kelas {student.kelas}
-                      {latest && ` • ${latest.tilpiKategori} Hal. ${latest.tilpiHalaman}`}
-                    </p>
+            {students.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Belum ada siswa terdaftar.</p>
+            ) : (
+              students.map(student => {
+                const latest = getStudentLatestRecord(student.id);
+                return (
+                  <div
+                    key={student.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-sm text-foreground">{student.nama}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Kelas {student.kelas}
+                        {latest && ` • ${latest.tilpi_kategori} Hal. ${latest.tilpi_halaman}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {latest && (
+                        <Badge className={`text-xs ${getStatusColor(latest.status)}`}>
+                          {latest.status}
+                        </Badge>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-primary text-primary hover:bg-secondary"
+                        onClick={() => { setSelectedStudent(student); setShowForm(true); }}
+                      >
+                        <Plus className="w-3 h-3 mr-1" /> Input
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {latest && (
-                      <Badge className={`text-xs ${getStatusColor(latest.status)}`}>
-                        {latest.status}
-                      </Badge>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-primary text-primary hover:bg-secondary"
-                      onClick={() => { setSelectedStudent(student); setShowForm(true); }}
-                    >
-                      <Plus className="w-3 h-3 mr-1" /> Input
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </CardContent>
         </Card>
       </main>
 
-      {/* Daily Input Modal */}
-      {showForm && selectedStudent && (
+      {showForm && selectedStudent && guruData && (
         <DailyInputForm
-          student={selectedStudent}
-          onClose={() => { setShowForm(false); setSelectedStudent(null); }}
+          student={{ id: selectedStudent.id, name: selectedStudent.nama, kelas: selectedStudent.kelas, noHpOrtu: selectedStudent.no_hp_ortu }}
+          guruId={guruData.id}
+          onClose={() => { setShowForm(false); setSelectedStudent(null); fetchData(); }}
         />
       )}
     </div>

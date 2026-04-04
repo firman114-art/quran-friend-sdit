@@ -5,17 +5,37 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { saveRecord, TILAWAH_KATEGORI, STATUS_OPTIONS, type User, type TilawahKategori, type Status, type DailyRecord } from '@/lib/data';
+import { TILAWAH_KATEGORI, STATUS_OPTIONS, type TilawahKategori, type Status } from '@/lib/data';
 import { JUZ_DATA, getSurahByJuz } from '@/lib/quran-data';
+import { supabase } from '@/integrations/supabase/client';
 import { X, Save, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+interface StudentInfo {
+  id: string;
+  name: string;
+  kelas?: string;
+  noHpOrtu?: string | null;
+}
+
 interface Props {
-  student: User;
+  student: StudentInfo;
+  guruId: string;
   onClose: () => void;
 }
 
-function buildWhatsAppMessage(student: User, record: DailyRecord): string {
+interface SavedRecord {
+  tanggal: string;
+  tilpiKategori: string;
+  tilpiHalaman: number;
+  tahfidzJuz: number | null;
+  tahfidzSurah: string;
+  tahfidzAyat: string;
+  status: string;
+  catatan: string;
+}
+
+function buildWhatsAppMessage(student: StudentInfo, record: SavedRecord): string {
   const lines = [
     `بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ`,
     ``,
@@ -52,7 +72,7 @@ function openWhatsApp(phone: string, message: string) {
   window.open(`https://wa.me/${cleanPhone}?text=${encoded}`, '_blank');
 }
 
-const DailyInputForm = ({ student, onClose }: Props) => {
+const DailyInputForm = ({ student, guruId, onClose }: Props) => {
   const { toast } = useToast();
   const [tilpiKategori, setTilpiKategori] = useState<TilawahKategori>('Jilid 1');
   const [tilpiHalaman, setTilpiHalaman] = useState('');
@@ -61,7 +81,8 @@ const DailyInputForm = ({ student, onClose }: Props) => {
   const [tahfidzAyat, setTahfidzAyat] = useState('');
   const [status, setStatus] = useState<Status>('Lancar');
   const [catatan, setCatatan] = useState('');
-  const [savedRecord, setSavedRecord] = useState<DailyRecord | null>(null);
+  const [savedRecord, setSavedRecord] = useState<SavedRecord | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const availableSurah = selectedJuz ? getSurahByJuz(parseInt(selectedJuz)) : [];
 
@@ -76,16 +97,37 @@ const DailyInputForm = ({ student, onClose }: Props) => {
     setTahfidzAyat('');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!tilpiHalaman || !selectedJuz || !tahfidzSurah || !tahfidzAyat) {
       toast({ title: 'Lengkapi semua field!', variant: 'destructive' });
       return;
     }
 
-    const record: DailyRecord = {
-      id: `r${Date.now()}`,
-      siswaId: student.id,
-      tanggal: new Date().toISOString().split('T')[0],
+    setSaving(true);
+    const tanggal = new Date().toISOString().split('T')[0];
+
+    const { error } = await supabase.from('daily_records').insert({
+      siswa_id: student.id,
+      guru_id: guruId,
+      tanggal,
+      tilpi_kategori: tilpiKategori,
+      tilpi_halaman: parseInt(tilpiHalaman),
+      tahfidz_juz: parseInt(selectedJuz),
+      tahfidz_surah: tahfidzSurah,
+      tahfidz_ayat: tahfidzAyat,
+      status,
+      catatan,
+    });
+
+    setSaving(false);
+
+    if (error) {
+      toast({ title: 'Gagal menyimpan', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    setSavedRecord({
+      tanggal,
       tilpiKategori,
       tilpiHalaman: parseInt(tilpiHalaman),
       tahfidzJuz: parseInt(selectedJuz),
@@ -93,10 +135,7 @@ const DailyInputForm = ({ student, onClose }: Props) => {
       tahfidzAyat,
       status,
       catatan,
-    };
-
-    saveRecord(record);
-    setSavedRecord(record);
+    });
     toast({ title: 'Berhasil!', description: `Data ${student.name} telah disimpan.` });
   };
 
@@ -106,7 +145,6 @@ const DailyInputForm = ({ student, onClose }: Props) => {
     openWhatsApp(student.noHpOrtu, message);
   };
 
-  // Success state
   if (savedRecord) {
     return (
       <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center p-4 z-50">
@@ -154,7 +192,6 @@ const DailyInputForm = ({ student, onClose }: Props) => {
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Tilawah Section */}
           <div className="p-3 rounded-lg bg-secondary">
             <p className="font-semibold text-sm text-secondary-foreground mb-3">📖 Tilawah</p>
             <div className="grid grid-cols-2 gap-3">
@@ -171,43 +208,28 @@ const DailyInputForm = ({ student, onClose }: Props) => {
               </div>
               <div>
                 <Label className="text-xs">Halaman</Label>
-                <Input
-                  type="number"
-                  placeholder="1"
-                  value={tilpiHalaman}
-                  onChange={e => setTilpiHalaman(e.target.value)}
-                />
+                <Input type="number" placeholder="1" value={tilpiHalaman} onChange={e => setTilpiHalaman(e.target.value)} />
               </div>
             </div>
           </div>
 
-          {/* Tahfidz Section - 3 cascading selects */}
           <div className="p-3 rounded-lg bg-secondary">
             <p className="font-semibold text-sm text-secondary-foreground mb-3">🕌 Tahfidz</p>
             <div className="space-y-3">
-              {/* Juz */}
               <div>
                 <Label className="text-xs">Juz</Label>
                 <Select value={selectedJuz} onValueChange={handleJuzChange}>
                   <SelectTrigger><SelectValue placeholder="Pilih Juz..." /></SelectTrigger>
                   <SelectContent>
                     {JUZ_DATA.map(j => (
-                      <SelectItem key={j.nomor} value={String(j.nomor)}>
-                        Juz {j.nomor}
-                      </SelectItem>
+                      <SelectItem key={j.nomor} value={String(j.nomor)}>Juz {j.nomor}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Surah - filtered by Juz */}
               <div>
                 <Label className="text-xs">Surah</Label>
-                <Select
-                  value={tahfidzSurah}
-                  onValueChange={handleSurahChange}
-                  disabled={!selectedJuz}
-                >
+                <Select value={tahfidzSurah} onValueChange={handleSurahChange} disabled={!selectedJuz}>
                   <SelectTrigger>
                     <SelectValue placeholder={selectedJuz ? 'Pilih Surah...' : 'Pilih Juz dulu'} />
                   </SelectTrigger>
@@ -218,21 +240,13 @@ const DailyInputForm = ({ student, onClose }: Props) => {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Ayat */}
               <div>
                 <Label className="text-xs">Ayat</Label>
-                <Input
-                  placeholder="Contoh: 1-7"
-                  value={tahfidzAyat}
-                  onChange={e => setTahfidzAyat(e.target.value)}
-                  disabled={!tahfidzSurah}
-                />
+                <Input placeholder="Contoh: 1-7" value={tahfidzAyat} onChange={e => setTahfidzAyat(e.target.value)} disabled={!tahfidzSurah} />
               </div>
             </div>
           </div>
 
-          {/* Status */}
           <div>
             <Label className="text-xs">Status</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as Status)}>
@@ -245,19 +259,13 @@ const DailyInputForm = ({ student, onClose }: Props) => {
             </Select>
           </div>
 
-          {/* Catatan */}
           <div>
             <Label className="text-xs">Catatan Guru</Label>
-            <Textarea
-              placeholder="Tuliskan catatan untuk siswa..."
-              value={catatan}
-              onChange={e => setCatatan(e.target.value)}
-              rows={2}
-            />
+            <Textarea placeholder="Tuliskan catatan untuk siswa..." value={catatan} onChange={e => setCatatan(e.target.value)} rows={2} />
           </div>
 
-          <Button className="w-full gradient-hero text-primary-foreground" onClick={handleSubmit}>
-            <Save className="w-4 h-4 mr-2" /> Simpan
+          <Button className="w-full gradient-hero text-primary-foreground" onClick={handleSubmit} disabled={saving}>
+            <Save className="w-4 h-4 mr-2" /> {saving ? 'Menyimpan...' : 'Simpan'}
           </Button>
         </CardContent>
       </Card>

@@ -1,28 +1,61 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getCurrentUser, setCurrentUser, getStudentRecords } from '@/lib/data';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { BookOpen, LogOut, TrendingUp, Star, MessageSquare } from 'lucide-react';
+
+interface RecordRow {
+  id: string;
+  tanggal: string;
+  tilpi_kategori: string;
+  tilpi_halaman: number;
+  tahfidz_juz: number | null;
+  tahfidz_surah: string;
+  tahfidz_ayat: string;
+  status: string;
+  catatan: string | null;
+}
 
 const SiswaDashboard = () => {
   const navigate = useNavigate();
-  const user = getCurrentUser();
+  const { profile, siswaData, signOut, loading } = useAuth();
+  const [records, setRecords] = useState<RecordRow[]>([]);
 
-  if (!user || user.role !== 'siswa') {
-    navigate('/');
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && (!profile || profile.role !== 'siswa')) {
+      navigate('/');
+    }
+  }, [loading, profile, navigate]);
 
-  const records = getStudentRecords(user.id);
-  const lancarRecords = records.filter(r => r.status === 'Lancar');
-  const uniqueSurah = [...new Set(lancarRecords.map(r => r.tahfidzSurah))];
-  const notesFromGuru = records.filter(r => r.catatan.trim() !== '');
+  useEffect(() => {
+    if (siswaData) {
+      supabase
+        .from('daily_records')
+        .select('*')
+        .eq('siswa_id', siswaData.id)
+        .order('tanggal', { ascending: true })
+        .then(({ data }) => {
+          if (data) setRecords(data);
+        });
+    }
+  }, [siswaData]);
 
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    await signOut();
     navigate('/');
   };
+
+  if (loading || !profile || !siswaData) return null;
+
+  const lancarRecords = records.filter(r => r.status === 'Lancar');
+  const uniqueSurah = [...new Set(lancarRecords.map(r => r.tahfidz_surah))];
+  const notesFromGuru = records.filter(r => r.catatan && r.catatan.trim() !== '');
+
+  const maxHalaman = records.length > 0 ? Math.max(...records.map(r => r.tilpi_halaman)) : 0;
+  const progressPercent = Math.min((maxHalaman / 50) * 100, 100);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -33,20 +66,15 @@ const SiswaDashboard = () => {
     }
   };
 
-  // Simple progress bar data
-  const maxHalaman = records.length > 0 ? Math.max(...records.map(r => r.tilpiHalaman)) : 0;
-  const progressPercent = Math.min((maxHalaman / 50) * 100, 100);
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="gradient-hero text-primary-foreground">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BookOpen className="w-6 h-6" />
             <div>
               <h1 className="font-bold text-lg">Dashboard Siswa</h1>
-              <p className="text-xs opacity-80">Assalamu'alaikum, {user.name}</p>
+              <p className="text-xs opacity-80">Assalamu'alaikum, {siswaData.nama}</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={handleLogout} className="text-primary-foreground hover:bg-primary-foreground/20">
@@ -56,7 +84,6 @@ const SiswaDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4 text-center">
@@ -101,16 +128,15 @@ const SiswaDashboard = () => {
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              {/* Mini chart: last records */}
               <div className="flex items-end gap-1 h-16 mt-4">
-                {records.slice(-10).map((r, i) => {
-                  const height = (r.tilpiHalaman / Math.max(maxHalaman, 1)) * 100;
+                {records.slice(-10).map((r) => {
+                  const height = (r.tilpi_halaman / Math.max(maxHalaman, 1)) * 100;
                   return (
                     <div key={r.id} className="flex-1 flex flex-col items-center gap-1">
                       <div
                         className="w-full rounded-t gradient-hero opacity-70 hover:opacity-100 transition-opacity"
                         style={{ height: `${Math.max(height, 10)}%` }}
-                        title={`Hal. ${r.tilpiHalaman} - ${r.tanggal}`}
+                        title={`Hal. ${r.tilpi_halaman} - ${r.tanggal}`}
                       />
                       <span className="text-[9px] text-muted-foreground">{r.tanggal.slice(-2)}</span>
                     </div>
@@ -136,9 +162,9 @@ const SiswaDashboard = () => {
               records.map(r => (
                 <div key={r.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                   <div>
-                    <p className="font-medium text-sm text-foreground">{r.tahfidzSurah} (Ayat {r.tahfidzAyat})</p>
+                    <p className="font-medium text-sm text-foreground">{r.tahfidz_surah} (Ayat {r.tahfidz_ayat})</p>
                     <p className="text-xs text-muted-foreground">
-                      {r.tanggal} • {r.tahfidzJuz ? `Juz ${r.tahfidzJuz} • ` : ''}{r.tilpiKategori} Hal. {r.tilpiHalaman}
+                      {r.tanggal} • {r.tahfidz_juz ? `Juz ${r.tahfidz_juz} • ` : ''}{r.tilpi_kategori} Hal. {r.tilpi_halaman}
                     </p>
                   </div>
                   <Badge className={`text-xs ${getStatusColor(r.status)}`}>{r.status}</Badge>
@@ -161,7 +187,7 @@ const SiswaDashboard = () => {
               {notesFromGuru.map(r => (
                 <div key={r.id} className="p-3 rounded-lg bg-secondary border-l-4 border-primary">
                   <p className="text-sm text-foreground">{r.catatan}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{r.tanggal} • {r.tahfidzSurah}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{r.tanggal} • {r.tahfidz_surah}</p>
                 </div>
               ))}
             </CardContent>
