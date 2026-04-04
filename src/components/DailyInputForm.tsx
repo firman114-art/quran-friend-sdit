@@ -5,13 +5,50 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { saveRecord, TILAWAH_KATEGORI, SURAH_LIST, STATUS_OPTIONS, type User, type TilawahKategori, type Status } from '@/lib/data';
-import { X, Save } from 'lucide-react';
+import { saveRecord, TILAWAH_KATEGORI, SURAH_LIST, STATUS_OPTIONS, type User, type TilawahKategori, type Status, type DailyRecord } from '@/lib/data';
+import { X, Save, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Props {
   student: User;
   onClose: () => void;
+}
+
+function buildWhatsAppMessage(student: User, record: DailyRecord): string {
+  const lines = [
+    `بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ`,
+    ``,
+    `📋 *Laporan Harian Al-Qur'an*`,
+    `🏫 SDIT Al-Insan Pinrang`,
+    `📅 ${record.tanggal}`,
+    ``,
+    `👤 *Nama:* ${student.name}`,
+    `🎓 *Kelas:* ${student.kelas}`,
+    ``,
+    `📖 *Tilawah:*`,
+    `   Kategori: ${record.tilpiKategori}`,
+    `   Halaman: ${record.tilpiHalaman}`,
+    ``,
+    `🕌 *Tahfidz:*`,
+    `   Surah: ${record.tahfidzSurah}`,
+    `   Ayat: ${record.tahfidzAyat}`,
+    ``,
+    `📊 *Status:* ${record.status}`,
+  ];
+
+  if (record.catatan) {
+    lines.push(``, `📝 *Catatan Guru:*`, `${record.catatan}`);
+  }
+
+  lines.push(``, `_Semoga Allah memudahkan hafalan ananda. Jazakumullahu khairan._`);
+
+  return lines.join('\n');
+}
+
+function openWhatsApp(phone: string, message: string) {
+  const encoded = encodeURIComponent(message);
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  window.open(`https://wa.me/${cleanPhone}?text=${encoded}`, '_blank');
 }
 
 const DailyInputForm = ({ student, onClose }: Props) => {
@@ -22,6 +59,7 @@ const DailyInputForm = ({ student, onClose }: Props) => {
   const [tahfidzAyat, setTahfidzAyat] = useState('');
   const [status, setStatus] = useState<Status>('Lancar');
   const [catatan, setCatatan] = useState('');
+  const [savedRecord, setSavedRecord] = useState<DailyRecord | null>(null);
 
   const handleSubmit = () => {
     if (!tilpiHalaman || !tahfidzSurah || !tahfidzAyat) {
@@ -29,7 +67,7 @@ const DailyInputForm = ({ student, onClose }: Props) => {
       return;
     }
 
-    saveRecord({
+    const record: DailyRecord = {
       id: `r${Date.now()}`,
       siswaId: student.id,
       tanggal: new Date().toISOString().split('T')[0],
@@ -39,11 +77,54 @@ const DailyInputForm = ({ student, onClose }: Props) => {
       tahfidzAyat,
       status,
       catatan,
-    });
+    };
 
+    saveRecord(record);
+    setSavedRecord(record);
     toast({ title: 'Berhasil!', description: `Data ${student.name} telah disimpan.` });
-    onClose();
   };
+
+  const handleSendWhatsApp = () => {
+    if (!savedRecord || !student.noHpOrtu) return;
+    const message = buildWhatsAppMessage(student, savedRecord);
+    openWhatsApp(student.noHpOrtu, message);
+  };
+
+  // Success state
+  if (savedRecord) {
+    return (
+      <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center p-4 z-50">
+        <Card className="w-full max-w-md border-0 shadow-2xl animate-fade-in">
+          <CardContent className="p-6 text-center space-y-5">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/10 mx-auto">
+              <CheckCircle2 className="w-8 h-8 text-success" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-foreground">Data Tersimpan!</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Catatan harian {student.name} berhasil disimpan.
+              </p>
+            </div>
+
+            {student.noHpOrtu && (
+              <Button
+                className="w-full bg-success hover:bg-success/90 text-success-foreground"
+                size="lg"
+                onClick={handleSendWhatsApp}
+              >
+                <MessageCircle className="w-5 h-5 mr-2" />
+                Kirim ke Orang Tua via WhatsApp
+              </Button>
+            )}
+
+            <Button variant="outline" className="w-full" onClick={onClose}>
+              Tutup
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center p-4 z-50">
@@ -89,7 +170,7 @@ const DailyInputForm = ({ student, onClose }: Props) => {
             <p className="font-semibold text-sm text-secondary-foreground mb-3">🕌 Tahfidz</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Surah / Juz</Label>
+                <Label className="text-xs">Surah</Label>
                 <Select value={tahfidzSurah} onValueChange={setTahfidzSurah}>
                   <SelectTrigger><SelectValue placeholder="Pilih..." /></SelectTrigger>
                   <SelectContent>
