@@ -14,16 +14,168 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_records: {
+        Row: {
+          catatan: string | null
+          created_at: string
+          guru_id: string
+          id: string
+          siswa_id: string
+          status: string
+          tahfidz_ayat: string
+          tahfidz_juz: number | null
+          tahfidz_surah: string
+          tanggal: string
+          tilpi_halaman: number
+          tilpi_kategori: string
+          updated_at: string
+        }
+        Insert: {
+          catatan?: string | null
+          created_at?: string
+          guru_id: string
+          id?: string
+          siswa_id: string
+          status: string
+          tahfidz_ayat: string
+          tahfidz_juz?: number | null
+          tahfidz_surah: string
+          tanggal: string
+          tilpi_halaman: number
+          tilpi_kategori: string
+          updated_at?: string
+        }
+        Update: {
+          catatan?: string | null
+          created_at?: string
+          guru_id?: string
+          id?: string
+          siswa_id?: string
+          status?: string
+          tahfidz_ayat?: string
+          tahfidz_juz?: number | null
+          tahfidz_surah?: string
+          tanggal?: string
+          tilpi_halaman?: number
+          tilpi_kategori?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_records_guru_id_fkey"
+            columns: ["guru_id"]
+            isOneToOne: false
+            referencedRelation: "guru"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_records_siswa_id_fkey"
+            columns: ["siswa_id"]
+            isOneToOne: false
+            referencedRelation: "siswa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guru: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          nama: string
+          no_hp: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          nama: string
+          no_hp?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          nama?: string
+          no_hp?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      siswa: {
+        Row: {
+          created_at: string
+          id: string
+          kelas: string
+          nama: string
+          no_hp_ortu: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kelas: string
+          nama: string
+          no_hp_ortu?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kelas?: string
+          nama?: string
+          no_hp_ortu?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "guru" | "siswa"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +302,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["guru", "siswa"],
+    },
   },
 } as const
