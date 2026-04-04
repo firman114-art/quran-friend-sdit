@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, LogOut, Users, ClipboardList, Plus } from 'lucide-react';
+import { BookOpen, LogOut, Users, ClipboardList, Plus, UserPlus } from 'lucide-react';
 import DailyInputForm from '@/components/DailyInputForm';
+import AddStudentForm from '@/components/AddStudentForm';
 
 interface SiswaRow {
   id: string;
@@ -36,6 +37,7 @@ const GuruDashboard = () => {
   const [records, setRecords] = useState<RecordRow[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<SiswaRow | null>(null);
+  const [showAddStudent, setShowAddStudent] = useState(false);
 
   useEffect(() => {
     if (!loading && (!profile || profile.role !== 'guru')) {
@@ -124,11 +126,14 @@ const GuruDashboard = () => {
         </div>
 
         <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
               Daftar Siswa
             </CardTitle>
+            <Button size="sm" onClick={() => setShowAddStudent(true)} className="gradient-hero text-primary-foreground">
+              <UserPlus className="w-4 h-4 mr-1" /> Tambah
+            </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             {students.length === 0 ? (
@@ -176,6 +181,13 @@ const GuruDashboard = () => {
           student={{ id: selectedStudent.id, name: selectedStudent.nama, kelas: selectedStudent.kelas, noHpOrtu: selectedStudent.no_hp_ortu }}
           guruId={guruData.id}
           onClose={() => { setShowForm(false); setSelectedStudent(null); fetchData(); }}
+        />
+      )}
+
+      {showAddStudent && (
+        <AddStudentForm
+          onClose={() => setShowAddStudent(false)}
+          onSuccess={fetchData}
         />
       )}
     </div>
