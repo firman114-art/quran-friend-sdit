@@ -183,6 +183,13 @@ const GuruDashboard = () => {
           onClose={() => { setShowForm(false); setSelectedStudent(null); fetchData(); }}
         />
       )}
+
+      {showAddStudent && (
+        <AddStudentForm
+          onClose={() => setShowAddStudent(false)}
+          onSuccess={fetchData}
+        />
+      )}
     </div>
   );
 };
