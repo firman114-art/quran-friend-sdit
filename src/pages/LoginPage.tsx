@@ -78,9 +78,7 @@ const LoginPage = () => {
     <div className="min-h-screen islamic-pattern flex items-center justify-center p-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full gradient-hero mb-4 shadow-lg">
-            <BookOpen className="w-10 h-10 text-primary-foreground" />
-          </div>
+          <img src={logoSekolah} alt="Logo SDIT Al-Insan Pinrang" className="w-24 h-24 mx-auto mb-4 rounded-full object-cover shadow-lg" />
           <h1 className="text-2xl font-bold text-foreground">Manajemen Al-Qur'an</h1>
           <p className="text-muted-foreground mt-1">SDIT Al-Insan Pinrang</p>
         </div>
