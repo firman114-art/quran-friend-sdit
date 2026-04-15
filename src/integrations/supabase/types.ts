@@ -17,47 +17,95 @@ export type Database = {
       daily_records: {
         Row: {
           catatan: string | null
+          catatan_guru: string | null
           created_at: string
           guru_id: string
+          hafalan_ayat: string | null
+          hafalan_jenis_setoran: string | null
+          hafalan_juz: number | null
+          hafalan_kesalahan_kelancaran: number | null
+          hafalan_kesalahan_tajwid: number | null
+          hafalan_predikat: string | null
+          hafalan_surah: string | null
           id: string
+          jilid_buku: string | null
+          jilid_halaman: number | null
+          jilid_predikat: string | null
           siswa_id: string
-          status: string
-          tahfidz_ayat: string
+          status: string | null
+          tahfidz_ayat: string | null
           tahfidz_juz: number | null
-          tahfidz_surah: string
+          tahfidz_surah: string | null
           tanggal: string
-          tilpi_halaman: number
-          tilpi_kategori: string
+          tilawah_ayat: string | null
+          tilawah_kesalahan_kelancaran: number | null
+          tilawah_kesalahan_tajwid: number | null
+          tilawah_predikat: string | null
+          tilawah_surah: string | null
+          tilpi_halaman: number | null
+          tilpi_kategori: string | null
           updated_at: string
         }
         Insert: {
           catatan?: string | null
+          catatan_guru?: string | null
           created_at?: string
           guru_id: string
+          hafalan_ayat?: string | null
+          hafalan_jenis_setoran?: string | null
+          hafalan_juz?: number | null
+          hafalan_kesalahan_kelancaran?: number | null
+          hafalan_kesalahan_tajwid?: number | null
+          hafalan_predikat?: string | null
+          hafalan_surah?: string | null
           id?: string
+          jilid_buku?: string | null
+          jilid_halaman?: number | null
+          jilid_predikat?: string | null
           siswa_id: string
-          status: string
-          tahfidz_ayat: string
+          status?: string | null
+          tahfidz_ayat?: string | null
           tahfidz_juz?: number | null
-          tahfidz_surah: string
+          tahfidz_surah?: string | null
           tanggal: string
-          tilpi_halaman: number
-          tilpi_kategori: string
+          tilawah_ayat?: string | null
+          tilawah_kesalahan_kelancaran?: number | null
+          tilawah_kesalahan_tajwid?: number | null
+          tilawah_predikat?: string | null
+          tilawah_surah?: string | null
+          tilpi_halaman?: number | null
+          tilpi_kategori?: string | null
           updated_at?: string
         }
         Update: {
           catatan?: string | null
+          catatan_guru?: string | null
           created_at?: string
           guru_id?: string
+          hafalan_ayat?: string | null
+          hafalan_jenis_setoran?: string | null
+          hafalan_juz?: number | null
+          hafalan_kesalahan_kelancaran?: number | null
+          hafalan_kesalahan_tajwid?: number | null
+          hafalan_predikat?: string | null
+          hafalan_surah?: string | null
           id?: string
+          jilid_buku?: string | null
+          jilid_halaman?: number | null
+          jilid_predikat?: string | null
           siswa_id?: string
-          status?: string
-          tahfidz_ayat?: string
+          status?: string | null
+          tahfidz_ayat?: string | null
           tahfidz_juz?: number | null
-          tahfidz_surah?: string
+          tahfidz_surah?: string | null
           tanggal?: string
-          tilpi_halaman?: number
-          tilpi_kategori?: string
+          tilawah_ayat?: string | null
+          tilawah_kesalahan_kelancaran?: number | null
+          tilawah_kesalahan_tajwid?: number | null
+          tilawah_predikat?: string | null
+          tilawah_surah?: string | null
+          tilpi_halaman?: number | null
+          tilpi_kategori?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -84,6 +132,7 @@ export type Database = {
           id: string
           nama: string
           no_hp: string | null
+          photo_url: string | null
           updated_at: string
           user_id: string
         }
@@ -93,6 +142,7 @@ export type Database = {
           id?: string
           nama: string
           no_hp?: string | null
+          photo_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -102,10 +152,43 @@ export type Database = {
           id?: string
           nama?: string
           no_hp?: string | null
+          photo_url?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      kelas: {
+        Row: {
+          created_at: string
+          guru_id: string
+          id: string
+          nama_kelas: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          guru_id: string
+          id?: string
+          nama_kelas: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          guru_id?: string
+          id?: string
+          nama_kelas?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kelas_guru_id_fkey"
+            columns: ["guru_id"]
+            isOneToOne: false
+            referencedRelation: "guru"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -136,30 +219,44 @@ export type Database = {
           created_at: string
           id: string
           kelas: string
+          kelas_id: string | null
           nama: string
           no_hp_ortu: string | null
+          photo_url: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           kelas: string
+          kelas_id?: string | null
           nama: string
           no_hp_ortu?: string | null
+          photo_url?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           kelas?: string
+          kelas_id?: string | null
           nama?: string
           no_hp_ortu?: string | null
+          photo_url?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "siswa_kelas_id_fkey"
+            columns: ["kelas_id"]
+            isOneToOne: false
+            referencedRelation: "kelas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
