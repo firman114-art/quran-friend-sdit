@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface AuthContextType {
   session: Session | null;
   user: User | null;
-  profile: { role: 'guru' | 'siswa' } | null;
+  profile: { role: 'guru' | 'siswa' | 'admin' } | null;
   guruData: { id: string; nama: string; email: string; no_hp: string | null } | null;
   siswaData: { id: string; nama: string; kelas: string; no_hp_ortu: string | null } | null;
   loading: boolean;
@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<{ role: 'guru' | 'siswa' } | null>(null);
+  const [profile, setProfile] = useState<{ role: 'guru' | 'siswa' | 'admin' } | null>(null);
   const [guruData, setGuruData] = useState<AuthContextType['guruData']>(null);
   const [siswaData, setSiswaData] = useState<AuthContextType['siswaData']>(null);
   const [loading, setLoading] = useState(true);

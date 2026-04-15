@@ -1,28 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import logoSekolah from '@/assets/logo-sekolah.jpg';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
-import { BookOpen, GraduationCap, Users } from 'lucide-react';
+import logoSekolah from '@/assets/logo-sekolah.jpg';
+import { Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-type UserRole = 'guru' | 'siswa';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { signIn, signUp, profile, loading } = useAuth();
+  const { signIn, session, profile, loading } = useAuth();
   const { toast } = useToast();
-  const [isRegister, setIsRegister] = useState(false);
-  const [role, setRole] = useState<UserRole | ''>('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [nama, setNama] = useState('');
-  const [kelas, setKelas] = useState('');
-  const [noHpOrtu, setNoHpOrtu] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!loading && session && profile) {
+      if (profile.role === 'admin') navigate('/admin');
+      else if (profile.role === 'guru') navigate('/guru');
+      else navigate('/');
+    }
+  }, [loading, session, profile, navigate]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -35,109 +37,20 @@ const LoginPage = () => {
     if (error) {
       toast({ title: 'Gagal masuk', description: error.message, variant: 'destructive' });
     }
-    // Navigation handled by useEffect below
   };
-
-  const handleRegister = async () => {
-    if (!email || !password || !role || !nama) {
-      toast({ title: 'Lengkapi semua field!', variant: 'destructive' });
-      return;
-    }
-    if (role === 'siswa' && !kelas) {
-      toast({ title: 'Masukkan kelas!', variant: 'destructive' });
-      return;
-    }
-    setSubmitting(true);
-    const metadata: Record<string, string> = { role, nama };
-    if (role === 'siswa') {
-      metadata.kelas = kelas;
-      if (noHpOrtu) metadata.no_hp_ortu = noHpOrtu;
-    }
-    const { error } = await signUp(email, password, metadata);
-    setSubmitting(false);
-    if (error) {
-      toast({ title: 'Gagal daftar', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Berhasil!', description: 'Akun berhasil dibuat. Silakan masuk.' });
-      setIsRegister(false);
-    }
-  };
-
-  // Redirect if already logged in
-  const auth = useAuth();
-  if (!loading && auth.session && auth.profile) {
-    if (auth.profile.role === 'guru') {
-      navigate('/guru');
-    } else {
-      navigate('/siswa');
-    }
-    return null;
-  }
 
   return (
     <div className="min-h-screen islamic-pattern flex items-center justify-center p-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
           <img src={logoSekolah} alt="Logo SDIT Al-Insan Pinrang" className="w-24 h-24 mx-auto mb-4 rounded-full object-cover shadow-lg" />
-          <h1 className="text-2xl font-bold text-foreground">Manajemen Al-Qur'an</h1>
+          <h1 className="text-2xl font-bold text-foreground">Capaian Kelas Minat dan Bakat</h1>
           <p className="text-muted-foreground mt-1">SDIT Al-Insan Pinrang</p>
         </div>
 
         <Card className="shadow-xl border-0">
           <CardContent className="p-6 space-y-4">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                {isRegister ? 'Buat akun baru' : 'Silakan masuk untuk melanjutkan'}
-              </p>
-            </div>
-
-            {isRegister && (
-              <>
-                {/* Role Selection */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setRole('guru')}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                      role === 'guru'
-                        ? 'border-primary bg-secondary text-secondary-foreground'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <GraduationCap className="w-8 h-8" />
-                    <span className="font-medium text-sm">Guru</span>
-                  </button>
-                  <button
-                    onClick={() => setRole('siswa')}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                      role === 'siswa'
-                        ? 'border-primary bg-secondary text-secondary-foreground'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <Users className="w-8 h-8" />
-                    <span className="font-medium text-sm">Siswa</span>
-                  </button>
-                </div>
-
-                <div>
-                  <Label className="text-xs">Nama Lengkap</Label>
-                  <Input value={nama} onChange={e => setNama(e.target.value)} placeholder="Masukkan nama lengkap" />
-                </div>
-
-                {role === 'siswa' && (
-                  <>
-                    <div>
-                      <Label className="text-xs">Kelas</Label>
-                      <Input value={kelas} onChange={e => setKelas(e.target.value)} placeholder="Contoh: 5A" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">No. HP Orang Tua (opsional)</Label>
-                      <Input value={noHpOrtu} onChange={e => setNoHpOrtu(e.target.value)} placeholder="6281234567890" />
-                    </div>
-                  </>
-                )}
-              </>
-            )}
+            <p className="text-sm text-muted-foreground text-center">Masuk sebagai Guru atau Admin</p>
 
             <div>
               <Label className="text-xs">Email</Label>
@@ -145,24 +58,37 @@ const LoginPage = () => {
             </div>
             <div>
               <Label className="text-xs">Password</Label>
-              <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimal 6 karakter" />
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Masukkan password"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <Button
               className="w-full gradient-hero text-primary-foreground"
               size="lg"
               disabled={submitting}
-              onClick={isRegister ? handleRegister : handleLogin}
+              onClick={handleLogin}
             >
-              {submitting ? 'Memproses...' : isRegister ? 'Daftar' : 'Masuk'}
+              <LogIn className="w-4 h-4 mr-2" />
+              {submitting ? 'Memproses...' : 'Masuk'}
             </Button>
 
-            <p className="text-center text-sm text-muted-foreground">
-              {isRegister ? 'Sudah punya akun?' : 'Belum punya akun?'}{' '}
-              <button onClick={() => setIsRegister(!isRegister)} className="text-primary font-medium hover:underline">
-                {isRegister ? 'Masuk' : 'Daftar'}
-              </button>
-            </p>
+            <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => navigate('/')}>
+              <ArrowLeft className="w-4 h-4 mr-2" /> Kembali ke Beranda
+            </Button>
           </CardContent>
         </Card>
 
