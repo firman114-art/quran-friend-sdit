@@ -4,9 +4,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import Index from "./pages/Index";
 import LoginPage from "./pages/LoginPage";
 import GuruDashboard from "./pages/GuruDashboard";
-import SiswaDashboard from "./pages/SiswaDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import MuridDetail from "./pages/MuridDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,9 +21,11 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<LoginPage />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/guru" element={<GuruDashboard />} />
-            <Route path="/siswa" element={<SiswaDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/murid/:id" element={<MuridDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
