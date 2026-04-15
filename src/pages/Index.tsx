@@ -1,3 +1,104 @@
-import LoginPage from './LoginPage';
-const Index = () => <LoginPage />;
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import logoSekolah from '@/assets/logo-sekolah.jpg';
+import { Search, BookOpen, LogIn } from 'lucide-react';
+
+interface SiswaResult {
+  id: string;
+  nama: string;
+  kelas: string;
+}
+
+const Index = () => {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SiswaResult[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      setSearching(true);
+      const { data } = await supabase
+        .from('siswa')
+        .select('id, nama, kelas')
+        .ilike('nama', `%${query.trim()}%`)
+        .order('nama')
+        .limit(10);
+      setResults(data || []);
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [query]);
+
+  return (
+    <div className="min-h-screen islamic-pattern">
+      <header className="gradient-hero text-primary-foreground py-6">
+        <div className="container mx-auto px-4 text-center">
+          <img src={logoSekolah} alt="Logo SDIT Al-Insan" className="w-20 h-20 mx-auto mb-3 rounded-full object-cover shadow-lg border-2 border-primary-foreground/30" />
+          <h1 className="text-xl font-bold">Capaian Kelas Minat dan Bakat</h1>
+          <p className="text-sm opacity-90">SDIT Al-Insan Pinrang</p>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8 max-w-lg space-y-6">
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-6 space-y-4">
+            <div className="text-center">
+              <Search className="w-10 h-10 mx-auto text-primary mb-2" />
+              <h2 className="font-semibold text-lg text-foreground">Cari Progres Murid</h2>
+              <p className="text-sm text-muted-foreground">Ketik nama murid untuk melihat perkembangan Al-Qur'an</p>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Ketik nama murid..."
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            {searching && <p className="text-sm text-muted-foreground text-center">Mencari...</p>}
+            {results.length > 0 && (
+              <div className="space-y-2">
+                {results.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => navigate(`/murid/${s.id}`)}
+                    className="w-full flex items-center justify-between p-3 rounded-lg bg-secondary hover:bg-primary/10 transition-colors text-left"
+                  >
+                    <div>
+                      <p className="font-medium text-sm text-foreground">{s.nama}</p>
+                      <p className="text-xs text-muted-foreground">Kelas {s.kelas}</p>
+                    </div>
+                    <BookOpen className="w-4 h-4 text-primary" />
+                  </button>
+                ))}
+              </div>
+            )}
+            {query.trim().length >= 2 && !searching && results.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center">Murid tidak ditemukan.</p>
+            )}
+          </CardContent>
+        </Card>
+        <div className="text-center">
+          <Button variant="outline" onClick={() => navigate('/login')} className="border-primary text-primary hover:bg-secondary">
+            <LogIn className="w-4 h-4 mr-2" /> Masuk sebagai Guru / Admin
+          </Button>
+        </div>
+      </main>
+      <footer className="text-center py-6 text-sm text-muted-foreground">
+        <p className="italic">"Mencetak Generasi Qurani yang Cerdas dan Berakhlak Mulia."</p>
+      </footer>
+    </div>
+  );
+};
+
 export default Index;
