@@ -8,12 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, LogOut, Users, Plus, UserPlus, FolderPlus, ClipboardList, Calendar, Download } from 'lucide-react';
+import { BookOpen, LogOut, Users, Plus, UserPlus, FolderPlus, ClipboardList, Calendar, Download, Trash2 } from 'lucide-react';
 import DailyInputForm from '@/components/DailyInputForm';
 import AddStudentForm from '@/components/AddStudentForm';
 import MonthlyRecap from '@/components/MonthlyRecap';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
+import { useToast } from '@/hooks/use-toast';
 
 interface KelasRow {
   id: string;
@@ -45,20 +46,38 @@ interface RecordRow {
   catatan_guru: string | null;
 }
 
+interface JurnalRow {
+  id: string;
+  kelas_id: string;
+  tanggal: string;
+  hafalan: string | null;
+  tilawah: string | null;
+  tulisan: string | null;
+  keterangan: string | null;
+}
+
 const GuruDashboard = () => {
   const navigate = useNavigate();
   const { profile, guruData, signOut, loading } = useAuth();
+  const { toast } = useToast();
   const [kelasList, setKelasList] = useState<KelasRow[]>([]);
   const [selectedKelas, setSelectedKelas] = useState<string>('');
   const [students, setStudents] = useState<SiswaRow[]>([]);
   const [records, setRecords] = useState<RecordRow[]>([]);
+  const [jurnals, setJurnals] = useState<JurnalRow[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<SiswaRow | null>(null);
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showAddKelas, setShowAddKelas] = useState(false);
   const [newKelasName, setNewKelasName] = useState('');
   const [showRecap, setShowRecap] = useState(false);
-  const [tab, setTab] = useState<'students' | 'recap'>('students');
+  const [showJurnalForm, setShowJurnalForm] = useState(false);
+  const [jurnalTanggal, setJurnalTanggal] = useState(new Date().toISOString().split('T')[0]);
+  const [jurnalHafalan, setJurnalHafalan] = useState('');
+  const [jurnalTilawah, setJurnalTilawah] = useState('');
+  const [jurnalTulisan, setJurnalTulisan] = useState('');
+  const [jurnalKeterangan, setJurnalKeterangan] = useState('');
+  const [tab, setTab] = useState<'students' | 'recap' | 'jurnal'>('students');
 
   useEffect(() => {
     if (!loading && (!profile || profile.role !== 'guru')) {
@@ -71,7 +90,10 @@ const GuruDashboard = () => {
   }, [guruData]);
 
   useEffect(() => {
-    if (selectedKelas) fetchStudentsAndRecords();
+    if (selectedKelas) {
+      fetchStudentsAndRecords();
+      fetchJurnals();
+    }
   }, [selectedKelas]);
 
   const fetchKelas = async () => {
@@ -92,6 +114,15 @@ const GuruDashboard = () => {
     ]);
     if (studentsRes.data) setStudents(studentsRes.data as any);
     if (recordsRes.data) setRecords(recordsRes.data as any);
+  };
+
+  const fetchJurnals = async () => {
+    const { data } = await supabase
+      .from('jurnal_pembelajaran' as any)
+      .select('*')
+      .eq('kelas_id', selectedKelas)
+      .order('tanggal', { ascending: false });
+    if (data) setJurnals(data as any);
   };
 
   const handleCreateKelas = async () => {
@@ -195,14 +226,18 @@ const GuruDashboard = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-4">
               <Button size="sm" variant={tab === 'students' ? 'default' : 'outline'} onClick={() => setTab('students')}
                 className={tab === 'students' ? 'gradient-hero text-primary-foreground' : ''}>
-                <Users className="w-4 h-4 mr-1" /> Daftar Murid
+                <Users className="w-4 h-4 mr-1" /> Murid
               </Button>
               <Button size="sm" variant={tab === 'recap' ? 'default' : 'outline'} onClick={() => setTab('recap')}
                 className={tab === 'recap' ? 'gradient-hero text-primary-foreground' : ''}>
-                <ClipboardList className="w-4 h-4 mr-1" /> Rekap Bulanan
+                <ClipboardList className="w-4 h-4 mr-1" /> Rekap
+              </Button>
+              <Button size="sm" variant={tab === 'jurnal' ? 'default' : 'outline'} onClick={() => setTab('jurnal')}
+                className={tab === 'jurnal' ? 'gradient-hero text-primary-foreground' : ''}>
+                <BookOpen className="w-4 h-4 mr-1" /> Jurnal
               </Button>
             </div>
 
@@ -222,22 +257,40 @@ const GuruDashboard = () => {
                     <p className="text-sm text-muted-foreground text-center py-4">Belum ada murid di kelas ini.</p>
                   ) : (
                     filteredStudents.map(student => {
-                      const latest = records.find(r => r.siswa_id === student.id);
+                      const studentRecords = records.filter(r => r.siswa_id === student.id);
+                      const lastHafalan = studentRecords.find(r => r.hafalan_surah);
+                      const lastTilawah = studentRecords.find(r => r.tilawah_surah);
+                      const lastJilid = studentRecords.find(r => r.jilid_buku);
+                      const latest = studentRecords[0];
                       return (
                         <div key={student.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
                           <div className="flex-1">
                             <p className="font-medium text-sm">{student.nama}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {latest ? `${latest.hafalan_surah || latest.tilawah_surah || latest.jilid_buku || '-'} • ${latest.tanggal}` : 'Belum ada catatan'}
-                            </p>
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              {lastHafalan && <p>🕌 {lastHafalan.hafalan_surah} {lastHafalan.hafalan_predikat && `(${lastHafalan.hafalan_predikat})`}</p>}
+                              {lastTilawah && <p>📖 {lastTilawah.tilawah_surah} {lastTilawah.tilawah_predikat && `(${lastTilawah.tilawah_predikat})`}</p>}
+                              {lastJilid && <p>📕 {lastJilid.jilid_buku} Hal. {lastJilid.jilid_halaman} {lastJilid.jilid_predikat && `(${lastJilid.jilid_predikat})`}</p>}
+                              {!lastHafalan && !lastTilawah && !lastJilid && <p>Belum ada catatan</p>}
+                            </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {latest?.hafalan_predikat && (
-                              <Badge className="text-xs bg-primary/10 text-primary">{latest.hafalan_predikat}</Badge>
-                            )}
                             <Button size="sm" variant="outline" className="border-primary text-primary"
                               onClick={() => { setSelectedStudent(student); setShowForm(true); }}>
                               <Plus className="w-3 h-3 mr-1" /> Input
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive"
+                              onClick={async () => {
+                                if (confirm(`Hapus murid ${student.nama}?`)) {
+                                  const { error } = await supabase.from('siswa').delete().eq('id', student.id);
+                                  if (!error) {
+                                    toast({ title: 'Berhasil', description: `Murid ${student.nama} telah dihapus.` });
+                                    fetchStudentsAndRecords();
+                                  } else {
+                                    toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+                                  }
+                                }
+                              }}>
+                              <Trash2 className="w-3 h-3" />
                             </Button>
                           </div>
                         </div>
@@ -254,6 +307,34 @@ const GuruDashboard = () => {
                 records={kelasRecords}
                 kelasNama={currentKelas.nama_kelas}
               />
+            )}
+
+            {tab === 'jurnal' && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <CardTitle className="text-lg">Jurnal Pembelajaran — {currentKelas.nama_kelas}</CardTitle>
+                  <Button size="sm" className="gradient-hero text-primary-foreground" onClick={() => setShowJurnalForm(true)}>
+                    <Plus className="w-4 h-4 mr-1" /> Tambah
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {jurnals.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">Belum ada jurnal pembelajaran.</p>
+                  ) : (
+                    jurnals.map(j => (
+                      <div key={j.id} className="p-3 rounded-lg bg-muted/50 space-y-2">
+                        <p className="font-medium text-sm">{j.tanggal}</p>
+                        <div className="text-xs space-y-1">
+                          {j.hafalan && <p>🕌 Hafalan: {j.hafalan}</p>}
+                          {j.tilawah && <p>📖 Tilawah: {j.tilawah}</p>}
+                          {j.tulisan && <p>✍️ Tulisan: {j.tulisan}</p>}
+                          {j.keterangan && <p>📝 Keterangan: {j.keterangan}</p>}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
             )}
           </>
         )}
@@ -286,6 +367,68 @@ const GuruDashboard = () => {
           onClose={() => setShowAddStudent(false)}
           onSuccess={fetchStudentsAndRecords}
         />
+      )}
+
+      {showJurnalForm && currentKelas && guruData && (
+        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md border-0 shadow-2xl animate-fade-in">
+            <CardHeader>
+              <CardTitle className="text-lg">Tambah Jurnal Pembelajaran</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-xs">Tanggal</Label>
+                <Input type="date" value={jurnalTanggal} onChange={e => setJurnalTanggal(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Hafalan</Label>
+                <Input placeholder="Catatan hafalan..." value={jurnalHafalan} onChange={e => setJurnalHafalan(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Tilawah</Label>
+                <Input placeholder="Catatan tilawah..." value={jurnalTilawah} onChange={e => setJurnalTilawah(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Tulisan</Label>
+                <Input placeholder="Catatan tulisan..." value={jurnalTulisan} onChange={e => setJurnalTulisan(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Keterangan</Label>
+                <Input placeholder="Keterangan tambahan..." value={jurnalKeterangan} onChange={e => setJurnalKeterangan(e.target.value)} />
+              </div>
+              <div className="flex gap-2">
+                <Button className="flex-1 gradient-hero text-primary-foreground" onClick={async () => {
+                  const { error } = await supabase
+                    .from('jurnal_pembelajaran' as any)
+                    .insert({
+                      kelas_id: currentKelas.id,
+                      tanggal: jurnalTanggal,
+                      hafalan: jurnalHafalan || null,
+                      tilawah: jurnalTilawah || null,
+                      tulisan: jurnalTulisan || null,
+                      keterangan: jurnalKeterangan || null,
+                      guru_id: guruData.id,
+                    } as any);
+                  if (!error) {
+                    toast({ title: 'Berhasil', description: 'Jurnal pembelajaran telah ditambahkan.' });
+                    setJurnalTanggal(new Date().toISOString().split('T')[0]);
+                    setJurnalHafalan('');
+                    setJurnalTilawah('');
+                    setJurnalTulisan('');
+                    setJurnalKeterangan('');
+                    setShowJurnalForm(false);
+                    fetchJurnals();
+                  } else {
+                    toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+                  }
+                }}>
+                  Simpan
+                </Button>
+                <Button variant="outline" onClick={() => setShowJurnalForm(false)}>Batal</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

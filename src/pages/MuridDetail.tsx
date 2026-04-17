@@ -161,7 +161,7 @@ const MuridDetail = () => {
                 <div key={r.id} className="p-3 rounded-lg bg-secondary/50 space-y-1">
                   <p className="text-xs font-medium text-primary">{r.tanggal}</p>
                   {r.hafalan_surah && (
-                    <p className="text-sm">🕌 Hafalan: {r.hafalan_surah} Ayat {r.hafalan_ayat}
+                    <p className="text-sm">🕌 Hafalan: {r.hafalan_surah}
                       {r.hafalan_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.hafalan_predikat}</Badge>}
                     </p>
                   )}

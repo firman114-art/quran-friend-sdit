@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { X, UserPlus, Upload } from 'lucide-react';
+import { X, UserPlus, Upload, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 
@@ -21,6 +21,17 @@ const AddStudentForm = ({ kelasId, kelasNama, onClose, onSuccess }: Props) => {
   const [nama, setNama] = useState('');
   const [noHpOrtu, setNoHpOrtu] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const handleDownloadTemplate = () => {
+    const template = [
+      { Nama: 'Contoh Nama Murid', 'No HP Ortu': '6281234567890' },
+      { Nama: 'Contoh Nama Murid 2', 'No HP Ortu': '' },
+    ];
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template Murid');
+    XLSX.writeFile(workbook, 'template_murid.xlsx');
+  };
 
   const handleManualSubmit = async () => {
     if (!nama.trim()) {
@@ -123,6 +134,9 @@ const AddStudentForm = ({ kelasId, kelasNama, onClose, onSuccess }: Props) => {
               <p className="text-xs text-muted-foreground">
                 Upload file Excel (.xlsx) dengan kolom: <strong>Nama</strong> (wajib), <strong>No HP Ortu</strong> (opsional).
               </p>
+              <Button size="sm" variant="outline" onClick={handleDownloadTemplate} className="w-full">
+                <Download className="w-3 h-3 mr-1" /> Download Template Excel
+              </Button>
               <Input type="file" accept=".xlsx,.xls" onChange={handleExcelUpload} disabled={submitting} />
               {submitting && <p className="text-sm text-muted-foreground text-center">Memproses...</p>}
             </div>

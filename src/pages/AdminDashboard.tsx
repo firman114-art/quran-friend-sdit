@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Eye, EyeOff, LogOut, Users, GraduationCap, BookOpen, UserPlus, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MonthlyRecap from '@/components/MonthlyRecap';
+import AddStudentForm from '@/components/AddStudentForm';
 
 interface GuruRow {
   id: string;
@@ -56,8 +57,9 @@ const AdminDashboard = () => {
   const [kelasList, setKelasList] = useState<KelasRow[]>([]);
   const [students, setStudents] = useState<SiswaRow[]>([]);
   const [records, setRecords] = useState<RecordRow[]>([]);
-  const [tab, setTab] = useState<'guru' | 'kelas' | 'recap'>('guru');
+  const [tab, setTab] = useState<'guru' | 'kelas' | 'murid' | 'recap'>('guru');
   const [selectedKelasId, setSelectedKelasId] = useState('');
+  const [selectedKelasIdForMurid, setSelectedKelasIdForMurid] = useState('');
   // Add guru form
   const [showAddGuru, setShowAddGuru] = useState(false);
   const [guruNama, setGuruNama] = useState('');
@@ -65,6 +67,8 @@ const AdminDashboard = () => {
   const [guruPassword, setGuruPassword] = useState('');
   const [showGuruPass, setShowGuruPass] = useState(false);
   const [addingGuru, setAddingGuru] = useState(false);
+  // Add student form
+  const [showAddStudent, setShowAddStudent] = useState(false);
 
   useEffect(() => {
     if (!loading && (!profile || profile.role !== 'admin')) {
@@ -175,6 +179,10 @@ const AdminDashboard = () => {
             className={tab === 'kelas' ? 'gradient-hero text-primary-foreground' : ''}>
             <BookOpen className="w-4 h-4 mr-1" /> Kelas
           </Button>
+          <Button size="sm" variant={tab === 'murid' ? 'default' : 'outline'} onClick={() => setTab('murid')}
+            className={tab === 'murid' ? 'gradient-hero text-primary-foreground' : ''}>
+            <Users className="w-4 h-4 mr-1" /> Murid
+          </Button>
           <Button size="sm" variant={tab === 'recap' ? 'default' : 'outline'} onClick={() => setTab('recap')}
             className={tab === 'recap' ? 'gradient-hero text-primary-foreground' : ''}>
             Rekap
@@ -225,6 +233,63 @@ const AdminDashboard = () => {
                   </div>
                 );
               })}
+            </CardContent>
+          </Card>
+        )}
+
+        {tab === 'murid' && (
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-lg">Daftar Murid</CardTitle>
+              <div className="flex gap-2">
+                <select
+                  className="text-sm rounded-md border border-input bg-background px-3 py-1"
+                  value={selectedKelasIdForMurid}
+                  onChange={e => setSelectedKelasIdForMurid(e.target.value)}
+                >
+                  <option value="">Semua Kelas</option>
+                  {kelasList.map(k => (
+                    <option key={k.id} value={k.id}>{k.nama_kelas}</option>
+                  ))}
+                </select>
+                <Button size="sm" className="gradient-hero text-primary-foreground" onClick={() => setShowAddStudent(true)}>
+                  <UserPlus className="w-4 h-4 mr-1" /> Tambah
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {(() => {
+                const filteredStudents = selectedKelasIdForMurid
+                  ? students.filter(s => s.kelas_id === selectedKelasIdForMurid)
+                  : students;
+                return filteredStudents.map(s => {
+                  const kelas = kelasList.find(k => k.id === s.kelas_id);
+                  return (
+                    <div key={s.id} className="p-3 rounded-lg bg-muted/50 flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{s.nama}</p>
+                        <p className="text-xs text-muted-foreground">Kelas: {kelas?.nama_kelas || s.kelas} | No HP: {s.no_hp_ortu || '-'}</p>
+                      </div>
+                      <Button size="sm" variant="destructive" onClick={async () => {
+                        if (confirm(`Hapus murid ${s.nama}?`)) {
+                          const { error } = await supabase.from('siswa').delete().eq('id', s.id);
+                          if (!error) {
+                            toast({ title: 'Berhasil', description: `Murid ${s.nama} telah dihapus.` });
+                            fetchAll();
+                          } else {
+                            toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+                          }
+                        }
+                      }}>
+                        Hapus
+                      </Button>
+                    </div>
+                  );
+                });
+              })()}
+              {(!selectedKelasIdForMurid ? students : students.filter(s => s.kelas_id === selectedKelasIdForMurid)).length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">Tidak ada murid.</p>
+              )}
             </CardContent>
           </Card>
         )}
@@ -298,6 +363,16 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Add Student Modal */}
+      {showAddStudent && selectedKelasIdForMurid && (
+        <AddStudentForm
+          kelasId={selectedKelasIdForMurid}
+          kelasNama={kelasList.find(k => k.id === selectedKelasIdForMurid)?.nama_kelas || ''}
+          onClose={() => setShowAddStudent(false)}
+          onSuccess={fetchAll}
+        />
       )}
     </div>
   );

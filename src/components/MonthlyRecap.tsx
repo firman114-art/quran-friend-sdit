@@ -139,7 +139,7 @@ const MonthlyRecap = ({ students, records, kelasNama }: Props) => {
               </div>
               <div className="grid grid-cols-1 gap-1 text-xs">
                 {s.lastHafalan && (
-                  <p>🕌 Hafalan terakhir: {s.lastHafalan.hafalan_surah} Ay. {s.lastHafalan.hafalan_ayat}
+                  <p>🕌 Hafalan terakhir: {s.lastHafalan.hafalan_surah}
                     {s.lastHafalan.hafalan_predikat && <Badge className="ml-1 text-[10px] bg-primary/10 text-primary">{s.lastHafalan.hafalan_predikat}</Badge>}
                   </p>
                 )}

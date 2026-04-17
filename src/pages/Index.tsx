@@ -42,8 +42,9 @@ const Index = () => {
     <div className="min-h-screen islamic-pattern">
       <header className="gradient-hero text-primary-foreground py-6">
         <div className="container mx-auto px-4 text-center">
+          <p className="text-lg font-arabic mb-2">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</p>
           <img src={logoSekolah} alt="Logo SDIT Al-Insan" className="w-20 h-20 mx-auto mb-3 rounded-full object-cover shadow-lg border-2 border-primary-foreground/30" />
-          <h1 className="text-xl font-bold">Capaian Kelas Minat dan Bakat</h1>
+          <h1 className="text-xl font-bold">AISHA (Al-Insan Student Hafidz Achievement)</h1>
           <p className="text-sm opacity-90">SDIT Al-Insan Pinrang</p>
         </div>
       </header>

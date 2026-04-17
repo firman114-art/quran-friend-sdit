@@ -51,6 +51,7 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
   const [hafalanJenisSetoran, setHafalanJenisSetoran] = useState('');
   const [hafalanKesalahanTajwid, setHafalanKesalahanTajwid] = useState(0);
   const [hafalanKesalahanKelancaran, setHafalanKesalahanKelancaran] = useState(0);
+  const [hafalanKesalahanFasohah, setHafalanKesalahanFasohah] = useState(0);
   // Tilawah
   const [tilawahJuz, setTilawahJuz] = useState('');
   const [tilawahSurah, setTilawahSurah] = useState('');
@@ -58,10 +59,13 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
   const [tilawahPredikat, setTilawahPredikat] = useState('');
   const [tilawahKesalahanTajwid, setTilawahKesalahanTajwid] = useState(0);
   const [tilawahKesalahanKelancaran, setTilawahKesalahanKelancaran] = useState(0);
+  const [tilawahKesalahanFasohah, setTilawahKesalahanFasohah] = useState(0);
   // Jilid
   const [jilidBuku, setJilidBuku] = useState('');
   const [jilidHalaman, setJilidHalaman] = useState('');
   const [jilidPredikat, setJilidPredikat] = useState('');
+  const [jilidKesalahanTajwid, setJilidKesalahanTajwid] = useState(0);
+  const [jilidKesalahanKelancaran, setJilidKesalahanKelancaran] = useState(0);
   // Catatan
   const [catatanGuru, setCatatanGuru] = useState('');
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
@@ -71,17 +75,161 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
   const hafalanSurahList = hafalanJuz ? getSurahByJuz(parseInt(hafalanJuz)) : [];
   const tilawahSurahList = tilawahJuz ? getSurahByJuz(parseInt(tilawahJuz)) : [];
 
+  // Helper function to map surah name to surah number
+  const getSurahNumber = (surahName: string): number | null => {
+    const baseName = surahName.split('(')[0].trim();
+    const surahMap: { [key: string]: number } = {
+      'Al-Fatihah': 1,
+      'Al-Baqarah': 2,
+      'Ali Imran': 3,
+      'An-Nisa': 4,
+      'Al-Maidah': 5,
+      "Al-An'am": 6,
+      "Al-A'raf": 7,
+      'Al-Anfal': 8,
+      'At-Taubah': 9,
+      'Yunus': 10,
+      'Hud': 11,
+      'Yusuf': 12,
+      "Ar-Ra'd": 13,
+      'Ibrahim': 14,
+      'Al-Hijr': 15,
+      'An-Nahl': 16,
+      "Al-Isra'": 17,
+      'Al-Kahf': 18,
+      'Maryam': 19,
+      'Taha': 20,
+      'Al-Anbiya': 21,
+      'Al-Hajj': 22,
+      "Al-Mu'minun": 23,
+      'An-Nur': 24,
+      'Al-Furqan': 25,
+      "Asy-Syu'ara": 26,
+      'An-Naml': 27,
+      'Al-Qasas': 28,
+      'Al-Ankabut': 29,
+      'Ar-Rum': 30,
+      'Luqman': 31,
+      'As-Sajdah': 32,
+      'Al-Ahzab': 33,
+      "Saba'": 34,
+      'Fatir': 35,
+      'Yasin': 36,
+      'As-Saffat': 37,
+      'Sad': 38,
+      'Az-Zumar': 39,
+      'Ghafir': 40,
+      'Fussilat': 41,
+      'Asy-Syura': 42,
+      'Az-Zukhruf': 43,
+      'Ad-Dukhan': 44,
+      'Al-Jasiyah': 45,
+      'Al-Ahqaf': 46,
+      'Muhammad': 47,
+      'Al-Fath': 48,
+      'Al-Hujurat': 49,
+      'Qaf': 50,
+      'Az-Zariyat': 51,
+      'At-Tur': 52,
+      'An-Najm': 53,
+      'Al-Qamar': 54,
+      'Ar-Rahman': 55,
+      "Al-Waqi'ah": 56,
+      'Al-Hadid': 57,
+      'Al-Mujadalah': 58,
+      'Al-Hasyr': 59,
+      'Al-Mumtahanah': 60,
+      'As-Saff': 61,
+      "Al-Jumu'ah": 62,
+      'Al-Munafiqun': 63,
+      'At-Tagabun': 64,
+      'At-Talaq': 65,
+      'At-Tahrim': 66,
+      'Al-Mulk': 67,
+      'Al-Qalam': 68,
+      'Al-Haqqah': 69,
+      "Al-Ma'arij": 70,
+      'Nuh': 71,
+      'Al-Jinn': 72,
+      'Al-Muzzammil': 73,
+      'Al-Muddassir': 74,
+      'Al-Qiyamah': 75,
+      'Al-Insan': 76,
+      'Al-Mursalat': 77,
+      "An-Naba'": 78,
+      "An-Nazi'at": 79,
+      "'Abasa": 80,
+      'At-Takwir': 81,
+      'Al-Infitar': 82,
+      'Al-Mutaffifin': 83,
+      'Al-Insyiqaq': 84,
+      'Al-Buruj': 85,
+      'At-Tariq': 86,
+      "Al-A'la": 87,
+      'Al-Ghasyiyah': 88,
+      'Al-Fajr': 89,
+      'Al-Balad': 90,
+      'Asy-Syams': 91,
+      'Al-Lail': 92,
+      'Ad-Duha': 93,
+      'Al-Insyirah': 94,
+      'At-Tin': 95,
+      "Al-'Alaq": 96,
+      'Al-Qadr': 97,
+      'Al-Bayyinah': 98,
+      'Az-Zalzalah': 99,
+      "Al-'Adiyat": 100,
+      "Al-Qari'ah": 101,
+      'At-Takasur': 102,
+      "Al-'Asr": 103,
+      'Al-Humazah': 104,
+      'Al-Fil': 105,
+      'Quraisy': 106,
+      "Al-Ma'un": 107,
+      'Al-Kausar': 108,
+      'Al-Kafirun': 109,
+      'An-Nasr': 110,
+      'Al-Lahab': 111,
+      'Al-Ikhlas': 112,
+      'Al-Falaq': 113,
+      'An-Nas': 114,
+    };
+    return surahMap[baseName] || null;
+  };
+
+  // Auto-open Quran page when juz, surah, and ayat are selected (for Hafalan)
+  useEffect(() => {
+    if (hafalanJuz && hafalanSurah && hafalanAyat) {
+      const surahNumber = getSurahNumber(hafalanSurah);
+      if (surahNumber) {
+        // Open quran.com with the specific verse
+        window.open(`https://quran.com/${surahNumber}:${hafalanAyat}`, '_blank');
+      }
+    }
+  }, [hafalanJuz, hafalanSurah, hafalanAyat]);
+
+  // Auto-open Quran page when juz, surah, and ayat are selected (for Tilawah)
+  useEffect(() => {
+    if (tilawahJuz && tilawahSurah && tilawahAyat) {
+      const surahNumber = getSurahNumber(tilawahSurah);
+      if (surahNumber) {
+        // Open quran.com with the specific verse
+        window.open(`https://quran.com/${surahNumber}:${tilawahAyat}`, '_blank');
+      }
+    }
+  }, [tilawahJuz, tilawahSurah, tilawahAyat]);
+
   // Auto-generate catatan
   useEffect(() => {
     const parts: string[] = [];
     if (hafalanSurah) {
-      parts.push(`Hafalan: ${hafalanSurah} Ay. ${hafalanAyat || '-'} (${hafalanPredikat || '-'}), Tajwid: ${hafalanKesalahanTajwid}, Kelancaran: ${hafalanKesalahanKelancaran}`);
+      parts.push(`Hafalan: ${hafalanSurah} Ay. ${hafalanAyat || '-'} (${hafalanPredikat || '-'}), Tajwid: ${hafalanKesalahanTajwid}, Kelancaran: ${hafalanKesalahanKelancaran}, Fasohah: ${hafalanKesalahanFasohah}`);
     }
     if (tilawahSurah) {
-      parts.push(`Tilawah: ${tilawahSurah} Ay. ${tilawahAyat || '-'} (${tilawahPredikat || '-'}), Tajwid: ${tilawahKesalahanTajwid}, Kelancaran: ${tilawahKesalahanKelancaran}`);
+      parts.push(`Tilawah: ${tilawahSurah} Ay. ${tilawahAyat || '-'} (${tilawahPredikat || '-'}), Tajwid: ${tilawahKesalahanTajwid}, Kelancaran: ${tilawahKesalahanKelancaran}, Fasohah: ${tilawahKesalahanFasohah}`);
     }
     if (jilidBuku) {
-      parts.push(`Jilid: ${jilidBuku} Hal. ${jilidHalaman || '-'} (${jilidPredikat || '-'})`);
+      parts.push(`Jilid: ${jilidBuku} Hal. ${jilidHalaman || '-'} (${jilidPredikat || '-'}), Tajwid: ${jilidKesalahanTajwid}, Kelancaran: ${jilidKesalahanKelancaran}`);
     }
     if (parts.length > 0) {
       setCatatanGuru(prev => {
@@ -92,7 +240,7 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
         return prev;
       });
     }
-  }, [hafalanSurah, hafalanAyat, hafalanPredikat, hafalanKesalahanTajwid, hafalanKesalahanKelancaran, tilawahSurah, tilawahAyat, tilawahPredikat, tilawahKesalahanTajwid, tilawahKesalahanKelancaran, jilidBuku, jilidHalaman, jilidPredikat]);
+  }, [hafalanSurah, hafalanAyat, hafalanPredikat, hafalanKesalahanTajwid, hafalanKesalahanKelancaran, hafalanKesalahanFasohah, tilawahSurah, tilawahAyat, tilawahPredikat, tilawahKesalahanTajwid, tilawahKesalahanKelancaran, tilawahKesalahanFasohah, jilidBuku, jilidHalaman, jilidPredikat, jilidKesalahanTajwid, jilidKesalahanKelancaran]);
 
   const handleSubmit = async () => {
     // At least one section must be filled
@@ -117,14 +265,18 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
       hafalan_jenis_setoran: hafalanJenisSetoran || null,
       hafalan_kesalahan_tajwid: hafalanKesalahanTajwid,
       hafalan_kesalahan_kelancaran: hafalanKesalahanKelancaran,
+      hafalan_kesalahan_fasohah: hafalanKesalahanFasohah,
       tilawah_surah: tilawahSurah || null,
       tilawah_ayat: tilawahAyat || null,
       tilawah_predikat: tilawahPredikat || null,
       tilawah_kesalahan_tajwid: tilawahKesalahanTajwid,
       tilawah_kesalahan_kelancaran: tilawahKesalahanKelancaran,
+      tilawah_kesalahan_fasohah: tilawahKesalahanFasohah,
       jilid_buku: jilidBuku || null,
       jilid_halaman: jilidHalaman ? parseInt(jilidHalaman) : null,
       jilid_predikat: jilidPredikat || null,
+      jilid_kesalahan_tajwid: jilidKesalahanTajwid,
+      jilid_kesalahan_kelancaran: jilidKesalahanKelancaran,
       catatan_guru: catatanGuru || null,
     } as any);
     setSaving(false);
@@ -231,6 +383,7 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
             </div>
             <ErrorCounter label="Kesalahan Tajwid" value={hafalanKesalahanTajwid} onChange={setHafalanKesalahanTajwid} />
             <ErrorCounter label="Kesalahan Kelancaran" value={hafalanKesalahanKelancaran} onChange={setHafalanKesalahanKelancaran} />
+            <ErrorCounter label="Kesalahan Fasohah" value={hafalanKesalahanFasohah} onChange={setHafalanKesalahanFasohah} />
           </div>
 
           {/* TILAWAH */}
@@ -269,6 +422,7 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
             </div>
             <ErrorCounter label="Kesalahan Tajwid" value={tilawahKesalahanTajwid} onChange={setTilawahKesalahanTajwid} />
             <ErrorCounter label="Kesalahan Kelancaran" value={tilawahKesalahanKelancaran} onChange={setTilawahKesalahanKelancaran} />
+            <ErrorCounter label="Kesalahan Fasohah" value={tilawahKesalahanFasohah} onChange={setTilawahKesalahanFasohah} />
           </div>
 
           {/* JILID */}
@@ -296,6 +450,8 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
                 </SelectContent>
               </Select>
             </div>
+            <ErrorCounter label="Kesalahan Tajwid" value={jilidKesalahanTajwid} onChange={setJilidKesalahanTajwid} />
+            <ErrorCounter label="Kesalahan Kelancaran" value={jilidKesalahanKelancaran} onChange={setJilidKesalahanKelancaran} />
           </div>
 
           {/* CATATAN */}
