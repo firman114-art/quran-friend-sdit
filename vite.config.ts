@@ -6,8 +6,8 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
-    port: 8080,
+    host: "0.0.0.0", // Ubah ke IP spesifik atau "0.0.0.0" untuk semua interfaces
+    port: 8080, // Ubah port jika diperlukan (misal: 3000)
     hmr: {
       overlay: false,
     },
