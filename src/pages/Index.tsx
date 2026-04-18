@@ -43,14 +43,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen islamic-pattern">
-      <header className="gradient-hero text-primary-foreground py-4">
+      <header className="gradient-hero text-primary-foreground py-4 relative z-50">
         <div className="container mx-auto px-4 flex items-center justify-between">
           {/* Kiri: Logo + Nama */}
           <div className="flex items-center gap-3">
             <img src={logoSekolah} alt="Logo SDIT Al-Insan" className="w-12 h-12 rounded-full object-cover shadow-lg border-2 border-primary-foreground/30" />
             <div>
               <h1 className="font-bold text-lg leading-tight">AISHA</h1>
-              <p className="text-xs opacity-90">SDIT Al-Insan Pinrang</p>
+              <p className="text-[10px] opacity-80 italic">Al-Insan Student Hafidz Achievement</p>
+              <p className="text-[10px] opacity-90">SDIT Al-Insan Pinrang</p>
             </div>
           </div>
           {/* Kanan: Login Button */}
@@ -58,7 +59,7 @@ const Index = () => {
             variant="outline" 
             size="sm" 
             onClick={() => navigate('/login')} 
-            className="border-primary-foreground/50 text-primary-foreground hover:bg-primary-foreground/20"
+            className="border-primary-foreground/50 text-primary-foreground hover:bg-primary-foreground/20 relative z-50"
           >
             <LogIn className="w-4 h-4 mr-2" /> Masuk
           </Button>
