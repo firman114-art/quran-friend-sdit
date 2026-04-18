@@ -43,12 +43,25 @@ const Index = () => {
 
   return (
     <div className="min-h-screen islamic-pattern">
-      <header className="gradient-hero text-primary-foreground py-6">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-lg font-arabic mb-2">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</p>
-          <img src={logoSekolah} alt="Logo SDIT Al-Insan" className="w-20 h-20 mx-auto mb-3 rounded-full object-cover shadow-lg border-2 border-primary-foreground/30" />
-          <h1 className="text-xl font-bold">AISHA (Al-Insan Student Hafidz Achievement)</h1>
-          <p className="text-sm opacity-90">SDIT Al-Insan Pinrang</p>
+      <header className="gradient-hero text-primary-foreground py-4">
+        <div className="container mx-auto px-4 flex items-center justify-between">
+          {/* Kiri: Logo + Nama */}
+          <div className="flex items-center gap-3">
+            <img src={logoSekolah} alt="Logo SDIT Al-Insan" className="w-12 h-12 rounded-full object-cover shadow-lg border-2 border-primary-foreground/30" />
+            <div>
+              <h1 className="font-bold text-lg leading-tight">AISHA</h1>
+              <p className="text-xs opacity-90">SDIT Al-Insan Pinrang</p>
+            </div>
+          </div>
+          {/* Kanan: Login Button */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate('/login')} 
+            className="border-primary-foreground/50 text-primary-foreground hover:bg-primary-foreground/20"
+          >
+            <LogIn className="w-4 h-4 mr-2" /> Masuk
+          </Button>
         </div>
       </header>
 
@@ -92,12 +105,9 @@ const Index = () => {
             )}
           </CardContent>
         </Card>
-        <div className="text-center space-y-3">
+        <div className="text-center">
           <Button className="w-full gradient-hero text-primary-foreground" onClick={() => setShowJurnalMuridForm(true)}>
             <Edit className="w-4 h-4 mr-2" /> Isi Jurnal Rumah
-          </Button>
-          <Button variant="outline" onClick={() => navigate('/login')} className="w-full border-primary text-primary hover:bg-secondary">
-            <LogIn className="w-4 h-4 mr-2" /> Masuk sebagai Guru / Admin
           </Button>
         </div>
 
