@@ -55,14 +55,16 @@ const Index = () => {
             </div>
           </div>
           {/* Kanan: Login Button */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => navigate('/login')} 
-            className="border-primary-foreground/50 text-primary-foreground hover:bg-primary-foreground/20 relative z-50"
-          >
-            <LogIn className="w-4 h-4 mr-2" /> Masuk
-          </Button>
+          <div className="relative z-[100]">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate('/login')} 
+              className="border-primary-foreground/50 text-primary-foreground hover:bg-primary-foreground/20 bg-transparent"
+            >
+              <LogIn className="w-4 h-4 mr-2" /> Masuk
+            </Button>
+          </div>
         </div>
       </header>
 
