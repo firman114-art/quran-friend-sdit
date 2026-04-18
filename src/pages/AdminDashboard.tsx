@@ -63,10 +63,10 @@ const AdminDashboard = () => {
   // Add guru form
   const [showAddGuru, setShowAddGuru] = useState(false);
   const [guruNama, setGuruNama] = useState('');
-  const [guruEmail, setGuruEmail] = useState('');
-  const [guruPassword, setGuruPassword] = useState('');
-  const [showGuruPass, setShowGuruPass] = useState(false);
+  const [generatedUsername, setGeneratedUsername] = useState('');
+  const [generatedPassword, setGeneratedPassword] = useState('');
   const [addingGuru, setAddingGuru] = useState(false);
+  const [showCredentials, setShowCredentials] = useState(false);
   // Add student form
   const [showAddStudent, setShowAddStudent] = useState(false);
 
@@ -111,27 +111,109 @@ const AdminDashboard = () => {
     return activeStudentIds.size;
   };
 
+  // Generate username and password from nama
+  const generateCredentials = (nama: string): { username: string; password: string } => {
+    const cleanNama = nama.toLowerCase().trim().replace(/\s+/g, '.');
+    // Generate unique username by checking existing
+    const baseUsername = cleanNama;
+    const password = `Guru${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    return { username: baseUsername, password };
+  };
+
   const handleAddGuru = async () => {
-    if (!guruNama || !guruEmail || !guruPassword) {
-      toast({ title: 'Lengkapi semua field!', variant: 'destructive' });
+    if (!guruNama) {
+      toast({ title: 'Masukkan nama guru!', variant: 'destructive' });
       return;
     }
+    
+    const { username: baseUsername, password } = generateCredentials(guruNama);
+    setGeneratedPassword(password);
+    
     setAddingGuru(true);
-    // Use edge function to create guru account
-    const { data, error } = await supabase.functions.invoke('create-guru', {
-      body: { email: guruEmail, password: guruPassword, nama: guruNama },
-    });
-    setAddingGuru(false);
-    if (error || data?.error) {
-      toast({ title: 'Gagal', description: data?.error || error?.message, variant: 'destructive' });
-      return;
+    
+    try {
+      // Generate unique username using SQL function
+      const { data: usernameData, error: usernameError } = await supabase.rpc('generate_guru_username', {
+        p_nama: guruNama
+      });
+      
+      if (usernameError) {
+        toast({ title: 'Gagal generate username', description: usernameError.message, variant: 'destructive' });
+        setAddingGuru(false);
+        return;
+      }
+      
+      const finalUsername: string = (usernameData as string) || baseUsername;
+      setGeneratedUsername(finalUsername);
+      
+      // Check if username already exists
+      const { data: existingGuru } = await supabase
+        .from('guru')
+        .select('id')
+        .eq('username', finalUsername)
+        .maybeSingle();
+        
+      if (existingGuru) {
+        toast({ title: 'Username sudah terdaftar', description: `Username ${finalUsername} sudah digunakan. Gunakan nama lain.`, variant: 'destructive' });
+        setAddingGuru(false);
+        return;
+      }
+      
+      // Generate a dummy UUID for guru id (since we're not using Supabase Auth)
+      const guruId = crypto.randomUUID();
+      
+      // Insert into guru table with username and password (no user_id for username-based auth)
+      const { error: guruError } = await supabase.from('guru').insert({
+        id: guruId,
+        nama: guruNama,
+        email: `${finalUsername}@sdit.local`, // Dummy email
+        username: finalUsername,
+        password_hash: password, // Will be hashed by SQL function
+        is_active: true
+      });
+      
+      if (guruError) {
+        console.error('Error inserting guru:', guruError);
+        toast({ 
+          title: 'Gagal membuat guru', 
+          description: guruError.message || 'Terjadi kesalahan saat menyimpan data guru.',
+          variant: 'destructive' 
+        });
+        setAddingGuru(false);
+        return;
+      }
+      
+      // Set password using SQL function (this will hash it properly)
+      const { error: passwordError } = await supabase.rpc('set_guru_password', {
+        p_guru_id: guruId,
+        p_password: password
+      });
+      
+      if (passwordError) {
+        console.error('Error setting password:', passwordError);
+      }
+      
+      // Also insert into profiles for consistency
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: guruId,
+        user_id: guruId,
+        nama_lengkap: guruNama,
+        role: 'guru'
+      });
+      
+      if (profileError) {
+        console.error('Error inserting profile:', profileError);
+      }
+      
+      toast({ title: 'Berhasil!', description: `Akun guru ${guruNama} telah dibuat.` });
+      setShowCredentials(true);
+      fetchAll();
+    } catch (err: any) {
+      console.error('Error creating guru:', err);
+      toast({ title: 'Gagal', description: err.message || 'Terjadi kesalahan tak terduga.', variant: 'destructive' });
     }
-    toast({ title: 'Berhasil!', description: `Akun guru ${guruNama} telah dibuat.` });
-    setShowAddGuru(false);
-    setGuruNama('');
-    setGuruEmail('');
-    setGuruPassword('');
-    fetchAll();
+    
+    setAddingGuru(false);
   };
 
   const handleLogout = async () => {
@@ -365,7 +447,7 @@ const AdminDashboard = () => {
       </main>
 
       {/* Add Guru Modal */}
-      {showAddGuru && (
+      {showAddGuru && !showCredentials && (
         <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center p-4 z-50">
           <Card className="w-full max-w-md border-0 shadow-2xl animate-fade-in">
             <CardHeader>
@@ -373,28 +455,15 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="text-xs">Nama *</Label>
-                <Input value={guruNama} onChange={e => setGuruNama(e.target.value)} placeholder="Nama guru" />
-              </div>
-              <div>
-                <Label className="text-xs">Email *</Label>
-                <Input type="email" value={guruEmail} onChange={e => setGuruEmail(e.target.value)} placeholder="email@contoh.com" />
-              </div>
-              <div>
-                <Label className="text-xs">Password *</Label>
-                <div className="relative">
-                  <Input
-                    type={showGuruPass ? 'text' : 'password'}
-                    value={guruPassword}
-                    onChange={e => setGuruPassword(e.target.value)}
-                    placeholder="Minimal 6 karakter"
-                    className="pr-10"
-                  />
-                  <button type="button" onClick={() => setShowGuruPass(!showGuruPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                    {showGuruPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+                <Label className="text-xs">Nama Guru *</Label>
+                <Input 
+                  value={guruNama} 
+                  onChange={e => setGuruNama(e.target.value)} 
+                  placeholder="Contoh: Budi Santoso" 
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Email dan password akan digenerate otomatis
+                </p>
               </div>
               <div className="flex gap-2">
                 <Button className="flex-1 gradient-hero text-primary-foreground" onClick={handleAddGuru} disabled={addingGuru}>
@@ -402,6 +471,48 @@ const AdminDashboard = () => {
                 </Button>
                 <Button variant="outline" onClick={() => setShowAddGuru(false)}>Batal</Button>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Show Generated Credentials */}
+      {showCredentials && (
+        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md border-0 shadow-2xl animate-fade-in">
+            <CardHeader>
+              <CardTitle className="text-lg text-success">Akun Guru Berhasil Dibuat!</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg space-y-2">
+                <div>
+                  <Label className="text-xs">Nama</Label>
+                  <p className="font-medium">{guruNama}</p>
+                </div>
+                <div>
+                  <Label className="text-xs">Username</Label>
+                  <p className="font-medium text-primary">{generatedUsername}</p>
+                </div>
+                <div>
+                  <Label className="text-xs">Password</Label>
+                  <p className="font-medium text-primary">{generatedPassword}</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Simpan informasi ini! Guru dapat login menggunakan email dan password di atas.
+              </p>
+              <Button 
+                className="w-full gradient-hero text-primary-foreground" 
+                onClick={() => {
+                  setShowCredentials(false);
+                  setShowAddGuru(false);
+                  setGuruNama('');
+                  setGeneratedUsername('');
+                  setGeneratedPassword('');
+                }}
+              >
+                Tutup
+              </Button>
             </CardContent>
           </Card>
         </div>

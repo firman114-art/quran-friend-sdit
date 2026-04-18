@@ -6,12 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, LogOut, Users, Plus, UserPlus, FolderPlus, ClipboardList, Calendar, Download, Trash2, Check, Clock } from 'lucide-react';
+import { BookOpen, LogOut, Users, Plus, UserPlus, FolderPlus, ClipboardList, Calendar, Download, Trash2, Check, Clock, Search, Home } from 'lucide-react';
 import DailyInputForm from '@/components/DailyInputForm';
 import AddStudentForm from '@/components/AddStudentForm';
 import MonthlyRecap from '@/components/MonthlyRecap';
+import JurnalRecap from '@/components/JurnalRecap';
 import JurnalKelasForm from '@/components/JurnalKelasForm';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
@@ -52,12 +54,20 @@ interface RecordRow {
 
 interface JurnalRow {
   id: string;
+  guru_id: string;
   kelas_id: string;
   tanggal: string;
   hafalan: string | null;
   tilawah: string | null;
   tulisan: string | null;
-  keterangan: string | null;
+  materi_pendamping: string | null;
+  jumlah_hadir: number | null;
+  jumlah_sakit: number | null;
+  jumlah_izin: number | null;
+  jumlah_alpa: number | null;
+  tugas_rumah: string | null;
+  catatan_kelas: string | null;
+  created_at: string;
 }
 
 const GuruDashboard = () => {
@@ -69,20 +79,16 @@ const GuruDashboard = () => {
   const [students, setStudents] = useState<SiswaRow[]>([]);
   const [records, setRecords] = useState<RecordRow[]>([]);
   const [jurnals, setJurnals] = useState<JurnalRow[]>([]);
+  const [jurnalRumah, setJurnalRumah] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<SiswaRow | null>(null);
   const [showAddStudent, setShowAddStudent] = useState(false);
   const [showAddKelas, setShowAddKelas] = useState(false);
   const [newKelasName, setNewKelasName] = useState('');
   const [showRecap, setShowRecap] = useState(false);
-  const [showJurnalForm, setShowJurnalForm] = useState(false);
   const [showJurnalKelasForm, setShowJurnalKelasForm] = useState(false);
-  const [jurnalTanggal, setJurnalTanggal] = useState(new Date().toISOString().split('T')[0]);
-  const [jurnalHafalan, setJurnalHafalan] = useState('');
-  const [jurnalTilawah, setJurnalTilawah] = useState('');
-  const [jurnalTulisan, setJurnalTulisan] = useState('');
-  const [jurnalKeterangan, setJurnalKeterangan] = useState('');
-  const [tab, setTab] = useState<'students' | 'recap' | 'jurnal'>('students');
+  const [tab, setTab] = useState<'students' | 'log' | 'recap' | 'jurnal'>('students');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!loading && (!profile || profile.role !== 'guru')) {
@@ -113,12 +119,48 @@ const GuruDashboard = () => {
   const fetchStudentsAndRecords = async () => {
     const kelas = kelasList.find(k => k.id === selectedKelas);
     if (!kelas) return;
-    const [studentsRes, recordsRes] = await Promise.all([
-      supabase.from('siswa').select('*').eq('kelas_id', selectedKelas).order('nama'),
-      supabase.from('daily_records').select('*').order('tanggal', { ascending: false }),
-    ]);
-    if (studentsRes.data) setStudents(studentsRes.data as any);
-    if (recordsRes.data) setRecords(recordsRes.data as any);
+    console.log('Fetching for kelas:', selectedKelas);
+    
+    // Fetch students first
+    const studentsRes = await supabase.from('siswa').select('*').eq('kelas_id', selectedKelas).order('nama');
+    console.log('Students:', studentsRes.data?.length, studentsRes.error);
+    
+    if (studentsRes.data) {
+      setStudents(studentsRes.data as any);
+      const studentIds = studentsRes.data.map(s => s.id);
+      
+      // Fetch records only for these students
+      const recordsRes = await supabase
+        .from('daily_records')
+        .select('*')
+        .in('siswa_id', studentIds)
+        .order('tanggal', { ascending: false });
+      console.log('Records for class:', recordsRes.data?.length, recordsRes.error);
+      
+      if (recordsRes.data) setRecords(recordsRes.data as any);
+      else if (recordsRes.error) {
+        console.error('Records error:', recordsRes.error);
+        toast({ title: 'Error fetch records', description: recordsRes.error.message, variant: 'destructive' });
+      }
+      
+      // Fetch jurnal rumah for these students
+      const jurnalRumahRes = await supabase
+        .from('jurnal_rumah')
+        .select('*')
+        .in('siswa_id', studentIds)
+        .order('tanggal', { ascending: false });
+      console.log('Jurnal Rumah for class:', jurnalRumahRes.data?.length, jurnalRumahRes.error);
+      
+      if (jurnalRumahRes.data) setJurnalRumah(jurnalRumahRes.data as any);
+      else if (jurnalRumahRes.error) {
+        console.error('Jurnal Rumah error:', jurnalRumahRes.error);
+      }
+    }
+    
+    if (studentsRes.error) {
+      console.error('Students error:', studentsRes.error);
+      toast({ title: 'Error fetch students', description: studentsRes.error.message, variant: 'destructive' });
+    }
   };
 
   const getTodaySetoranStatus = (studentId: string) => {
@@ -128,12 +170,15 @@ const GuruDashboard = () => {
   };
 
   const fetchJurnals = async () => {
-    const { data } = await supabase
-      .from('jurnal_pembelajaran' as any)
+    const { data, error } = await supabase
+      .from('jurnal_kelas' as any)
       .select('*')
-      .eq('kelas_id', selectedKelas)
+      .eq('kelas_id' as any, selectedKelas)
       .order('tanggal', { ascending: false });
-    if (data) setJurnals(data as any);
+    if (error) {
+      console.error('Error fetching jurnal_kelas:', error);
+    }
+    setJurnals((data as unknown as JurnalRow[]) || []);
   };
 
   const handleCreateKelas = async () => {
@@ -154,7 +199,9 @@ const GuruDashboard = () => {
   if (loading || !profile || !guruData) return null;
 
   const currentKelas = kelasList.find(k => k.id === selectedKelas);
-  const filteredStudents = students;
+  const filteredStudents = students.filter(s => 
+    s.nama.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   const kelasStudentIds = filteredStudents.map(s => s.id);
   const kelasRecords = records.filter(r => kelasStudentIds.includes(r.siswa_id));
 
@@ -246,6 +293,10 @@ const GuruDashboard = () => {
                 className={tab === 'recap' ? 'gradient-hero text-primary-foreground' : ''}>
                 <ClipboardList className="w-4 h-4 mr-1" /> Rekap
               </Button>
+              <Button size="sm" variant={tab === 'log' ? 'default' : 'outline'} onClick={() => setTab('log')}
+                className={tab === 'log' ? 'gradient-hero text-primary-foreground' : ''}>
+                <ClipboardList className="w-4 h-4 mr-1" /> Log Murid
+              </Button>
               <Button size="sm" variant={tab === 'jurnal' ? 'default' : 'outline'} onClick={() => setTab('jurnal')}
                 className={tab === 'jurnal' ? 'gradient-hero text-primary-foreground' : ''}>
                 <BookOpen className="w-4 h-4 mr-1" /> Jurnal
@@ -264,8 +315,19 @@ const GuruDashboard = () => {
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Cari murid berdasarkan nama..." 
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
                   {filteredStudents.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">Belum ada murid di kelas ini.</p>
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      {searchQuery ? 'Tidak ada murid yang cocok dengan pencarian.' : 'Belum ada murid di kelas ini.'}
+                    </p>
                   ) : (
                     filteredStudents.map(student => {
                       const studentRecords = records.filter(r => r.siswa_id === student.id);
@@ -332,37 +394,178 @@ const GuruDashboard = () => {
               />
             )}
 
-            {tab === 'jurnal' && (
+            {tab === 'log' && (
               <Card className="border-0 shadow-sm">
                 <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">Jurnal Pembelajaran — {currentKelas.nama_kelas}</CardTitle>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setShowJurnalKelasForm(true)}>
-                      <Calendar className="w-4 h-4 mr-1" /> Jurnal Kelas
-                    </Button>
-                    <Button size="sm" className="gradient-hero text-primary-foreground" onClick={() => setShowJurnalForm(true)}>
-                      <Plus className="w-4 h-4 mr-1" /> Tambah
-                    </Button>
-                  </div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <ClipboardList className="w-5 h-5 text-primary" />
+                    Log Harian Murid — {currentKelas.nama_kelas}
+                  </CardTitle>
+                  <Button size="sm" variant="outline" onClick={() => window.open('/jurnal-rumah', '_blank')}>
+                    <Home className="w-4 h-4 mr-1" /> Form Jurnal Rumah
+                  </Button>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {jurnals.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">Belum ada jurnal pembelajaran.</p>
+                <CardContent>
+                  {kelasRecords.length === 0 && jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id)).length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Belum ada log harian untuk kelas ini.
+                    </p>
                   ) : (
-                    jurnals.map(j => (
-                      <div key={j.id} className="p-3 rounded-lg bg-muted/50 space-y-2">
-                        <p className="font-medium text-sm">{j.tanggal}</p>
-                        <div className="text-xs space-y-1">
-                          {j.hafalan && <p>🕌 Hafalan: {j.hafalan}</p>}
-                          {j.tilawah && <p>📖 Tilawah: {j.tilawah}</p>}
-                          {j.tulisan && <p>✍️ Tulisan: {j.tulisan}</p>}
-                          {j.keterangan && <p>📝 Keterangan: {j.keterangan}</p>}
+                    <div className="space-y-6">
+                      {/* Jurnal Sekolah */}
+                      {kelasRecords.length > 0 && (
+                        <div>
+                          <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-primary rounded-full"></span>
+                            Jurnal Sekolah (Guru)
+                          </h3>
+                          <div className="overflow-x-auto">
+                            <Table className="border">
+                              <TableHeader>
+                                <TableRow className="bg-gray-50">
+                                  <TableHead className="border text-xs">Tanggal</TableHead>
+                                  <TableHead className="border text-xs">Nama Murid</TableHead>
+                                  <TableHead className="border text-xs">Hafalan</TableHead>
+                                  <TableHead className="border text-xs">Tilawah</TableHead>
+                                  <TableHead className="border text-xs">Jilid</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {kelasRecords.map((record) => {
+                                  const student = students.find(s => s.id === record.siswa_id);
+                                  return (
+                                    <TableRow key={record.id} className="text-xs">
+                                      <TableCell className="border whitespace-nowrap">
+                                        {new Date(record.tanggal).toLocaleDateString('id-ID')}
+                                      </TableCell>
+                                      <TableCell className="border font-medium">
+                                        {student?.nama || 'Unknown'}
+                                      </TableCell>
+                                      <TableCell className="border">
+                                        {record.hafalan_surah ? (
+                                          <span>
+                                            {record.hafalan_surah} 
+                                            {record.hafalan_predikat && ` (${record.hafalan_predikat})`}
+                                          </span>
+                                        ) : '-'}
+                                      </TableCell>
+                                      <TableCell className="border">
+                                        {record.tilawah_surah ? (
+                                          <span>
+                                            {record.tilawah_surah}
+                                            {record.tilawah_predikat && ` (${record.tilawah_predikat})`}
+                                          </span>
+                                        ) : '-'}
+                                      </TableCell>
+                                      <TableCell className="border">
+                                        {record.jilid_buku ? (
+                                          <span>
+                                            {record.jilid_buku} Hal.{record.jilid_halaman}
+                                            {record.jilid_predikat && ` (${record.jilid_predikat})`}
+                                          </span>
+                                        ) : '-'}
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
                         </div>
+                      )}
+
+                      {/* Jurnal Rumah */}
+                      {jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id)).length > 0 && (
+                        <div>
+                          <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-success rounded-full"></span>
+                            Jurnal Rumah (Murid/Orang Tua)
+                          </h3>
+                          <div className="overflow-x-auto">
+                            <Table className="border">
+                              <TableHeader>
+                                <TableRow className="bg-gray-50">
+                                  <TableHead className="border text-xs">Tanggal</TableHead>
+                                  <TableHead className="border text-xs">Nama Murid</TableHead>
+                              <TableHead className="border text-xs">Hafalan</TableHead>
+                              <TableHead className="border text-xs">Tilawah</TableHead>
+                              <TableHead className="border text-xs">Jilid</TableHead>
+                              <TableHead className="border text-xs">Catatan</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {jurnalRumah
+                              .filter(j => kelasStudentIds.includes(j.siswa_id))
+                              .map((jurnal) => {
+                                const student = students.find(s => s.id === jurnal.siswa_id);
+                                return (
+                                  <TableRow key={jurnal.id} className="text-xs">
+                                    <TableCell className="border whitespace-nowrap">
+                                      {new Date(jurnal.tanggal).toLocaleDateString('id-ID')}
+                                    </TableCell>
+                                    <TableCell className="border font-medium">
+                                      {student?.nama || 'Unknown'}
+                                    </TableCell>
+                                    <TableCell className="border">
+                                      {jurnal.hafalan_surah ? (
+                                        <span>{jurnal.hafalan_surah} {jurnal.hafalan_ayat}</span>
+                                      ) : '-'}
+                                    </TableCell>
+                                    <TableCell className="border">
+                                      {jurnal.tilawah_surah ? (
+                                        <span>{jurnal.tilawah_surah} {jurnal.tilawah_ayat}</span>
+                                      ) : '-'}
+                                    </TableCell>
+                                    <TableCell className="border">
+                                      {jurnal.jilid_buku ? (
+                                        <span>{jurnal.jilid_buku} Hal.{jurnal.jilid_halaman}</span>
+                                      ) : '-'}
+                                    </TableCell>
+                                    <TableCell className="border max-w-[150px] truncate">
+                                      {jurnal.catatan || '-'}
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                          </TableBody>
+                        </Table>
                       </div>
-                    ))
+                    </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {tab === 'jurnal' && (
+              <>
+                <div className="flex gap-2 mb-4">
+                  <Button 
+                    size="sm" 
+                    className="gradient-hero text-primary-foreground flex-1" 
+                    onClick={() => setShowJurnalKelasForm(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> Tambah Jurnal
+                  </Button>
+                </div>
+                <JurnalRecap 
+                  jurnals={jurnals} 
+                  kelasNama={currentKelas.nama_kelas}
+                  onDelete={async (id) => {
+                    const { error } = await supabase
+                      .from('jurnal_kelas' as any)
+                      .delete()
+                      .eq('id', id);
+                    if (error) {
+                      toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+                    } else {
+                      toast({ title: 'Berhasil', description: 'Jurnal telah dihapus.' });
+                      fetchJurnals();
+                    }
+                  }}
+                />
+              </>
             )}
           </>
         )}
@@ -382,7 +585,7 @@ const GuruDashboard = () => {
 
       {showForm && selectedStudent && guruData && (
         <DailyInputForm
-          student={{ id: selectedStudent.id, name: selectedStudent.nama, kelas: selectedStudent.kelas, noHpOrtu: selectedStudent.no_hp_ortu }}
+          student={{ id: selectedStudent.id, name: selectedStudent.nama, kelas: selectedStudent.kelas, noHpOrtu: null }}
           guruId={guruData.id}
           onClose={() => { setShowForm(false); setSelectedStudent(null); fetchStudentsAndRecords(); }}
         />
@@ -397,74 +600,13 @@ const GuruDashboard = () => {
         />
       )}
 
-      {showJurnalForm && currentKelas && guruData && (
-        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md border-0 shadow-2xl animate-fade-in">
-            <CardHeader>
-              <CardTitle className="text-lg">Tambah Jurnal Pembelajaran</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-xs">Tanggal</Label>
-                <Input type="date" value={jurnalTanggal} onChange={e => setJurnalTanggal(e.target.value)} />
-              </div>
-              <div>
-                <Label className="text-xs">Hafalan</Label>
-                <Input placeholder="Catatan hafalan..." value={jurnalHafalan} onChange={e => setJurnalHafalan(e.target.value)} />
-              </div>
-              <div>
-                <Label className="text-xs">Tilawah</Label>
-                <Input placeholder="Catatan tilawah..." value={jurnalTilawah} onChange={e => setJurnalTilawah(e.target.value)} />
-              </div>
-              <div>
-                <Label className="text-xs">Tulisan</Label>
-                <Input placeholder="Catatan tulisan..." value={jurnalTulisan} onChange={e => setJurnalTulisan(e.target.value)} />
-              </div>
-              <div>
-                <Label className="text-xs">Keterangan</Label>
-                <Input placeholder="Keterangan tambahan..." value={jurnalKeterangan} onChange={e => setJurnalKeterangan(e.target.value)} />
-              </div>
-              <div className="flex gap-2">
-                <Button className="flex-1 gradient-hero text-primary-foreground" onClick={async () => {
-                  const { error } = await supabase
-                    .from('jurnal_pembelajaran' as any)
-                    .insert({
-                      kelas_id: currentKelas.id,
-                      tanggal: jurnalTanggal,
-                      hafalan: jurnalHafalan || null,
-                      tilawah: jurnalTilawah || null,
-                      tulisan: jurnalTulisan || null,
-                      keterangan: jurnalKeterangan || null,
-                      guru_id: guruData.id,
-                    } as any);
-                  if (!error) {
-                    toast({ title: 'Berhasil', description: 'Jurnal pembelajaran telah ditambahkan.' });
-                    setJurnalTanggal(new Date().toISOString().split('T')[0]);
-                    setJurnalHafalan('');
-                    setJurnalTilawah('');
-                    setJurnalTulisan('');
-                    setJurnalKeterangan('');
-                    setShowJurnalForm(false);
-                    fetchJurnals();
-                  } else {
-                    toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
-                  }
-                }}>
-                  Simpan
-                </Button>
-                <Button variant="outline" onClick={() => setShowJurnalForm(false)}>Batal</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
       {showJurnalKelasForm && currentKelas && guruData && (
         <JurnalKelasForm
           kelasId={currentKelas.id}
           kelasNama={currentKelas.nama_kelas}
           guruId={guruData.id}
           onClose={() => setShowJurnalKelasForm(false)}
-          onSuccess={() => {}}
+          onSuccess={fetchJurnals}
         />
       )}
     </div>

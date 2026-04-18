@@ -6,11 +6,12 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   profile: { role: 'guru' | 'siswa' | 'admin' } | null;
-  guruData: { id: string; nama: string; email: string; no_hp: string | null } | null;
+  guruData: { id: string; nama: string; email: string; no_hp: string | null; username?: string | null } | null;
   siswaData: { id: string; nama: string; kelas: string; no_hp_ortu: string | null } | null;
   loading: boolean;
   signUp: (email: string, password: string, metadata: Record<string, string>) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithUsername: (username: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -37,15 +38,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data } = await supabase.from('guru').select('*').eq('user_id', userId).maybeSingle();
         setGuruData(data);
         setSiswaData(null);
-      } else {
+      } else if (profileData.role === 'siswa') {
         const { data } = await supabase.from('siswa').select('*').eq('user_id', userId).maybeSingle();
         setSiswaData(data);
         setGuruData(null);
+      } else if (profileData.role === 'admin') {
+        // Admin doesn't have guru or siswa data
+        setGuruData(null);
+        setSiswaData(null);
       }
     }
   };
 
   useEffect(() => {
+    // Check for guru session in localStorage (username-based login)
+    const guruSession = localStorage.getItem('guru_session');
+    if (guruSession) {
+      try {
+        const session = JSON.parse(guruSession);
+        // Check if session is not expired (optional: 24 hours)
+        const isExpired = Date.now() - session.timestamp > 24 * 60 * 60 * 1000;
+        if (!isExpired) {
+          setProfile({ role: 'guru' });
+          setGuruData({
+            id: session.id,
+            nama: session.nama,
+            email: session.email,
+            no_hp: null,
+            username: session.username
+          });
+          setSiswaData(null);
+          setLoading(false);
+          return;
+        } else {
+          localStorage.removeItem('guru_session');
+        }
+      } catch (e) {
+        localStorage.removeItem('guru_session');
+      }
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -85,12 +117,120 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  // Username-based login for Guru (custom auth)
+  const signInWithUsername = async (username: string, password: string) => {
+    try {
+      // Call the SQL function to verify guru credentials
+      const { data, error } = await supabase.rpc('verify_guru_login', {
+        p_username: username,
+        p_password: password
+      });
+
+      if (error) {
+        return { error: { message: error.message } };
+      }
+
+      if (!data || data.length === 0) {
+        return { error: { message: 'Username atau password salah' } };
+      }
+
+      const guru = data[0];
+      
+      if (!guru.is_active) {
+        return { error: { message: 'Akun guru tidak aktif' } };
+      }
+
+      // Try to sign in to Supabase Auth (create session for RLS)
+      console.log('Attempting Supabase Auth sign in for:', guru.email);
+      const { error: signInError, data: signInData } = await supabase.auth.signInWithPassword({
+        email: guru.email,
+        password: password
+      });
+      console.log('Sign in result:', { error: signInError?.message, user: signInData?.user?.id });
+
+      if (signInError) {
+        console.log('Sign in failed, attempting sign up...');
+        // If sign in fails, create auth user
+        if (signInError.message.includes('Invalid login credentials')) {
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: guru.email,
+            password: password,
+            options: {
+              data: {
+                nama: guru.nama,
+                role: 'guru'
+              }
+            }
+          });
+          console.log('Sign up result:', { error: signUpError?.message, user: signUpData?.user?.id });
+
+          if (signUpError) {
+            console.error('Failed to create auth user:', signUpError);
+            // Continue anyway with local session
+          } else if (signUpData.user) {
+            // Update guru.user_id with the new auth user ID
+            console.log('Updating guru.user_id to:', signUpData.user.id);
+            const { error: updateError } = await supabase.from('guru').update({ user_id: signUpData.user.id }).eq('id', guru.id);
+            if (updateError) console.error('Failed to update guru.user_id:', updateError);
+            
+            // Create profile for this user
+            const { error: profileError } = await supabase.from('profiles').insert({
+              user_id: signUpData.user.id,
+              role: 'guru',
+              nama_lengkap: guru.nama
+            });
+            if (profileError) console.error('Failed to create profile:', profileError);
+          }
+        }
+      } else if (signInData.user) {
+        console.log('Sign in success, user_id:', signInData.user.id);
+        // Update guru.user_id if not set
+        const { error: updateError } = await supabase.from('guru').update({ user_id: signInData.user.id }).eq('id', guru.id);
+        if (updateError) console.error('Failed to update guru.user_id:', updateError);
+      }
+
+      // Create a custom session state for username-based login
+      setProfile({ role: 'guru' });
+      setGuruData({
+        id: guru.id,
+        nama: guru.nama,
+        email: guru.email,
+        no_hp: null,
+        username: username
+      });
+      setSiswaData(null);
+      
+      // Store login state in localStorage for persistence
+      localStorage.setItem('guru_session', JSON.stringify({
+        id: guru.id,
+        nama: guru.nama,
+        email: guru.email,
+        username: username,
+        role: 'guru',
+        timestamp: Date.now()
+      }));
+
+      return { error: null };
+    } catch (err: any) {
+      return { error: { message: err.message || 'Terjadi kesalahan saat login' } };
+    }
+  };
+
   const signOut = async () => {
+    // Clear guru session from localStorage
+    localStorage.removeItem('guru_session');
+    // Also sign out from Supabase auth (for email-based users)
     await supabase.auth.signOut();
+    // Reset states
+    setProfile(null);
+    setGuruData(null);
+    setSiswaData(null);
+    setSession(null);
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, guruData, siswaData, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, guruData, siswaData, loading, signUp, signIn, signInWithUsername, signOut }}>
       {children}
     </AuthContext.Provider>
   );

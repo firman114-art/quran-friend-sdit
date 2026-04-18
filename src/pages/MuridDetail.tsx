@@ -14,8 +14,6 @@ interface SiswaInfo {
   id: string;
   nama: string;
   kelas: string;
-  no_hp_ortu: string | null;
-  photo_url: string | null;
 }
 
 interface RecordRow {
@@ -79,7 +77,7 @@ const MuridDetail = () => {
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      supabase.from('siswa').select('id, nama, kelas, no_hp_ortu, photo_url').eq('id', id).maybeSingle(),
+      supabase.from('siswa').select('id, nama, kelas').eq('id', id).maybeSingle(),
       supabase.from('daily_records').select('*').eq('siswa_id', id).order('tanggal', { ascending: false }),
     ]).then(([siswaRes, recordsRes]) => {
       if (siswaRes.data) setSiswa(siswaRes.data);
@@ -88,12 +86,13 @@ const MuridDetail = () => {
     });
   }, [id]);
 
-  const handleWhatsApp = () => {
-    if (!siswa?.no_hp_ortu || records.length === 0) return;
-    const msg = buildWhatsAppMessage(siswa, records);
-    const phone = siswa.no_hp_ortu.replace(/[^0-9]/g, '');
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-  };
+  // Fitur WhatsApp dinonaktifkan sementara - no_hp_ortu belum ada di database
+  // const handleWhatsApp = () => {
+  //   if (!siswa?.no_hp_ortu || records.length === 0) return;
+  //   const msg = buildWhatsAppMessage(siswa, records);
+  //   const phone = siswa.no_hp_ortu.replace(/[^0-9]/g, '');
+  //   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  // };
 
   const handleDownloadPDF = async () => {
     if (!reportRef.current) return;
@@ -229,11 +228,12 @@ const MuridDetail = () => {
           </Button>
         </div>
 
+        {/* Fitur WhatsApp dinonaktifkan sementara
         {siswa.no_hp_ortu && (
           <Button className="w-full bg-success hover:bg-success/90 text-success-foreground" onClick={handleWhatsApp}>
             <MessageCircle className="w-4 h-4 mr-2" /> Kirim Laporan ke Orang Tua
           </Button>
-        )}
+        )} */}
       </main>
 
       <footer className="text-center py-6 text-xs text-muted-foreground italic">

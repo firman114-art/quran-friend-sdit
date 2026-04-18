@@ -199,28 +199,6 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
     return surahMap[baseName] || null;
   };
 
-  // Auto-open Quran page when juz, surah, and ayat are selected (for Hafalan)
-  useEffect(() => {
-    if (hafalanJuz && hafalanSurah && hafalanAyat) {
-      const surahNumber = getSurahNumber(hafalanSurah);
-      if (surahNumber) {
-        // Open quran.com with the specific verse
-        window.open(`https://quran.com/${surahNumber}:${hafalanAyat}`, '_blank');
-      }
-    }
-  }, [hafalanJuz, hafalanSurah, hafalanAyat]);
-
-  // Auto-open Quran page when juz, surah, and ayat are selected (for Tilawah)
-  useEffect(() => {
-    if (tilawahJuz && tilawahSurah && tilawahAyat) {
-      const surahNumber = getSurahNumber(tilawahSurah);
-      if (surahNumber) {
-        // Open quran.com with the specific verse
-        window.open(`https://quran.com/${surahNumber}:${tilawahAyat}`, '_blank');
-      }
-    }
-  }, [tilawahJuz, tilawahSurah, tilawahAyat]);
-
   // Auto-generate catatan
   useEffect(() => {
     const parts: string[] = [];
@@ -258,33 +236,33 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
     }
 
     setSaving(true);
-    const { error } = await supabase.from('daily_records').insert({
+    const insertData = {
       siswa_id: student.id,
       guru_id: guruId,
       tanggal,
       hafalan_juz: hafalanJuz ? parseInt(hafalanJuz) : null,
       hafalan_surah: hafalanSurah || null,
       hafalan_ayat: hafalanAyat || null,
-      hafalan_penilaian: hafalanPredikat || null,
-      hafalan_jenis: hafalanJenisSetoran || null,
+      hafalan_predikat: hafalanPredikat || null,
+      hafalan_jenis_setoran: hafalanJenisSetoran || null,
       hafalan_kesalahan_tajwid: hafalanKesalahanTajwid,
       hafalan_kesalahan_kelancaran: hafalanKesalahanKelancaran,
-      hafalan_kesalahan_fasohah: hafalanKesalahanFasohah,
-      tilawah_tipe: tilawahTipe || null,
-      tilawah_juz: tilawahTipe === 'quran' && tilawahJuz ? parseInt(tilawahJuz) : null,
-      tilawah_surah: tilawahSurah || null,
-      tilawah_ayat: tilawahAyat || null,
-      tilawah_penilaian: tilawahPredikat || null,
-      tilawah_kesalahan_tajwid: tilawahKesalahanTajwid,
-      tilawah_kesalahan_kelancaran: tilawahKesalahanKelancaran,
-      tilawah_kesalahan_fasohah: tilawahKesalahanFasohah,
-      jilid_buku: tilawahTipe === 'jilid' ? tilawahSurah : (jilidBuku || null),
-      jilid_halaman: tilawahTipe === 'jilid' ? (tilawahAyat ? parseInt(tilawahAyat) : null) : (jilidHalaman ? parseInt(jilidHalaman) : null),
-      jilid_penilaian: tilawahTipe === 'jilid' ? tilawahPredikat : (jilidPredikat || null),
-      jilid_kesalahan_tajwid: tilawahTipe === 'jilid' ? tilawahKesalahanTajwid : jilidKesalahanTajwid,
-      jilid_kesalahan_kelancaran: tilawahTipe === 'jilid' ? tilawahKesalahanKelancaran : jilidKesalahanKelancaran,
+      // tilawah data menggunakan kolom yang tersedia di tabel
+      tilawah_surah: tilawahTipe === 'quran' ? tilawahSurah : null,
+      tilawah_ayat: tilawahTipe === 'quran' ? tilawahAyat : null,
+      tilawah_predikat: tilawahTipe === 'quran' ? tilawahPredikat : null,
+      tilawah_kesalahan_tajwid: tilawahTipe === 'quran' ? tilawahKesalahanTajwid : null,
+      tilawah_kesalahan_kelancaran: tilawahTipe === 'quran' ? tilawahKesalahanKelancaran : null,
+      // jilid data menggunakan kolom tilpi
+      tilpi_kategori: tilawahTipe === 'jilid' ? tilawahSurah : jilidBuku || null,
+      tilpi_halaman: tilawahTipe === 'jilid' 
+        ? (tilawahAyat ? parseInt(tilawahAyat) : null) 
+        : (jilidHalaman ? parseInt(jilidHalaman) : null),
       catatan_guru: catatanGuru || null,
-    } as any);
+    };
+    console.log('Insert data:', insertData);
+    const { error } = await supabase.from('daily_records').insert(insertData as any);
+    console.log('Insert error:', error);
     setSaving(false);
 
     if (error) {
@@ -384,6 +362,21 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
                   <Label className="text-xs">Ayat (angka saja)</Label>
                   <Input placeholder="Contoh: 1-7" value={hafalanAyat} onChange={e => setHafalanAyat(e.target.value.replace(/[^0-9\-,]/g, ''))} disabled={!hafalanSurah} />
                 </div>
+                {hafalanSurah && hafalanAyat && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      const surahNumber = getSurahNumber(hafalanSurah);
+                      if (surahNumber) {
+                        window.open(`https://quran.com/${surahNumber}:${hafalanAyat}`, '_blank');
+                      }
+                    }}
+                    className="w-full text-xs"
+                  >
+                    📖 Lihat Ayat di Quran.com
+                  </Button>
+                )}
                 <div>
                   <Label className="text-xs">Penilaian</Label>
                   <Select value={hafalanPredikat} onValueChange={setHafalanPredikat}>
@@ -440,6 +433,21 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
                       <Label className="text-xs">Ayat (angka saja)</Label>
                       <Input placeholder="Contoh: 1-10" value={tilawahAyat} onChange={e => setTilawahAyat(e.target.value.replace(/[^0-9\-,]/g, ''))} disabled={!tilawahSurah} />
                     </div>
+                    {tilawahSurah && tilawahAyat && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          const surahNumber = getSurahNumber(tilawahSurah);
+                          if (surahNumber) {
+                            window.open(`https://quran.com/${surahNumber}:${tilawahAyat}`, '_blank');
+                          }
+                        }}
+                        className="w-full text-xs"
+                      >
+                        📖 Lihat Ayat di Quran.com
+                      </Button>
+                    )}
                   </>
                 ) : (
                   <>

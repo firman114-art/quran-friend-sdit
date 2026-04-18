@@ -9,30 +9,59 @@ import logoSekolah from '@/assets/logo-sekolah.jpg';
 import { Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+type LoginType = 'email' | 'username';
+
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { signIn, session, profile, loading } = useAuth();
+  const { signIn, signInWithUsername, session, profile, guruData, loading } = useAuth();
   const { toast } = useToast();
+  const [loginType, setLoginType] = useState<LoginType>('username'); // Default to username for guru
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && session && profile) {
-      if (profile.role === 'admin') navigate('/admin');
-      else if (profile.role === 'guru') navigate('/guru');
-      else navigate('/');
+    if (!loading) {
+      // Handle email-based auth (admin)
+      if (session && profile) {
+        if (profile.role === 'admin') navigate('/admin');
+        else if (profile.role === 'guru') navigate('/guru');
+        else navigate('/');
+      }
+      // Handle username-based auth (guru)
+      else if (guruData && profile?.role === 'guru') {
+        navigate('/guru');
+      }
     }
-  }, [loading, session, profile, navigate]);
+  }, [loading, session, profile, guruData, navigate]);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      toast({ title: 'Lengkapi email dan password!', variant: 'destructive' });
+    if (loginType === 'email' && !email) {
+      toast({ title: 'Masukkan email!', variant: 'destructive' });
       return;
     }
+    if (loginType === 'username' && !username) {
+      toast({ title: 'Masukkan username!', variant: 'destructive' });
+      return;
+    }
+    if (!password) {
+      toast({ title: 'Masukkan password!', variant: 'destructive' });
+      return;
+    }
+    
     setSubmitting(true);
-    const { error } = await signIn(email, password);
+    
+    let error;
+    if (loginType === 'email') {
+      const result = await signIn(email, password);
+      error = result.error;
+    } else {
+      const result = await signInWithUsername(username, password);
+      error = result.error;
+    }
+    
     setSubmitting(false);
     if (error) {
       toast({ title: 'Gagal masuk', description: error.message, variant: 'destructive' });
@@ -51,11 +80,43 @@ const LoginPage = () => {
         <Card className="shadow-xl border-0">
           <CardContent className="p-6 space-y-4">
             <p className="text-sm text-muted-foreground text-center">Masuk sebagai Guru atau Admin</p>
-
-            <div>
-              <Label className="text-xs">Email</Label>
-              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@contoh.com" />
+            
+            {/* Login Type Toggle */}
+            <div className="flex gap-2 bg-muted rounded-lg p-1">
+              <button
+                onClick={() => setLoginType('username')}
+                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+                  loginType === 'username' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Username (Guru)
+              </button>
+              <button
+                onClick={() => setLoginType('email')}
+                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+                  loginType === 'email' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Email (Admin)
+              </button>
             </div>
+
+            {loginType === 'email' ? (
+              <div>
+                <Label className="text-xs">Email</Label>
+                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@contoh.com" />
+              </div>
+            ) : (
+              <div>
+                <Label className="text-xs">Username</Label>
+                <Input value={username} onChange={e => setUsername(e.target.value)} placeholder="nama.guru" />
+                <p className="text-xs text-muted-foreground mt-1">Contoh: budi.santoso</p>
+              </div>
+            )}
             <div>
               <Label className="text-xs">Password</Label>
               <div className="relative">

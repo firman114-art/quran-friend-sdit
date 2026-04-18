@@ -18,14 +18,15 @@ interface Props {
 const AddStudentForm = ({ kelasId, kelasNama, onClose, onSuccess }: Props) => {
   const { toast } = useToast();
   const [mode, setMode] = useState<'manual' | 'excel'>('manual');
+  const [nis, setNis] = useState('');
   const [nama, setNama] = useState('');
   const [noHpOrtu, setNoHpOrtu] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleDownloadTemplate = () => {
     const template = [
-      { Nama: 'Contoh Nama Murid', 'No HP Ortu': '6281234567890' },
-      { Nama: 'Contoh Nama Murid 2', 'No HP Ortu': '' },
+      { NIS: '12345', Nama: 'Contoh Nama Murid', 'No HP Ortu': '6281234567890' },
+      { NIS: '12346', Nama: 'Contoh Nama Murid 2', 'No HP Ortu': '' },
     ];
     const worksheet = XLSX.utils.json_to_sheet(template);
     const workbook = XLSX.utils.book_new();
@@ -40,6 +41,7 @@ const AddStudentForm = ({ kelasId, kelasNama, onClose, onSuccess }: Props) => {
     }
     setSubmitting(true);
     const { error } = await supabase.from('siswa').insert({
+      nis: nis.trim() || null,
       nama: nama.trim(),
       kelas: kelasNama,
       kelas_id: kelasId,
@@ -52,6 +54,9 @@ const AddStudentForm = ({ kelasId, kelasNama, onClose, onSuccess }: Props) => {
       return;
     }
     toast({ title: 'Berhasil!', description: `Murid ${nama} ditambahkan.` });
+    setNis('');
+    setNama('');
+    setNoHpOrtu('');
     onSuccess();
     onClose();
   };
@@ -62,25 +67,66 @@ const AddStudentForm = ({ kelasId, kelasNama, onClose, onSuccess }: Props) => {
     setSubmitting(true);
     try {
       const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
+      const workbook = XLSX.read(data, { cellDates: true });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<{ Nama: string; 'No HP Ortu'?: string }>(sheet);
-
-      if (rows.length === 0) {
-        toast({ title: 'File kosong!', variant: 'destructive' });
+      
+      // Debug: log sheet info
+      console.log('Sheet names:', workbook.SheetNames);
+      console.log('Sheet range:', sheet['!ref']);
+      
+      // Convert with header option to get object with column names as keys
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+      
+      console.log('Raw rows:', rows);
+      
+      if (rows.length < 2) {
+        toast({ title: 'File kosong atau tidak ada header!', variant: 'destructive' });
         setSubmitting(false);
         return;
       }
 
-      const inserts = rows
-        .filter(r => r.Nama?.trim())
-        .map(r => ({
-          nama: r.Nama.trim(),
+      // Get header row (first row)
+      const headers = rows[0].map((h: any) => String(h).toLowerCase().trim());
+      console.log('Headers found:', headers);
+      
+      // Find column indices (case-insensitive matching)
+      const nisIndex = headers.findIndex(h => h === 'nis' || h === 'nomor induk' || h === 'nomor induk siswa');
+      const namaIndex = headers.findIndex(h => h === 'nama' || h === 'name' || h === 'nama lengkap');
+      const noHpIndex = headers.findIndex(h => h === 'no hp ortu' || h === 'no hp' || h === 'nohp' || h === 'hp ortu' || h === 'telepon');
+      
+      if (namaIndex === -1) {
+        toast({ 
+          title: 'Format Excel salah!', 
+          description: `Kolom "Nama" tidak ditemukan. Kolom tersedia: ${headers.join(', ')}`,
+          variant: 'destructive' 
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      // Extract data rows (skip header)
+      const dataRows = rows.slice(1);
+      const inserts = dataRows
+        .filter(row => {
+          const nama = row[namaIndex];
+          return nama && String(nama).trim();
+        })
+        .map(row => ({
+          nis: nisIndex >= 0 && row[nisIndex] ? String(row[nisIndex]).trim() : null,
+          nama: String(row[namaIndex]).trim(),
           kelas: kelasNama,
           kelas_id: kelasId,
-          no_hp_ortu: r['No HP Ortu']?.toString() || null,
+          no_hp_ortu: noHpIndex >= 0 && row[noHpIndex] ? String(row[noHpIndex]).trim() : null,
           user_id: null,
         }));
+
+      console.log('Insert data:', inserts);
+
+      if (inserts.length === 0) {
+        toast({ title: 'Tidak ada data murid yang valid!', variant: 'destructive' });
+        setSubmitting(false);
+        return;
+      }
 
       const { error } = await supabase.from('siswa').insert(inserts as any);
       if (error) throw error;
@@ -89,6 +135,7 @@ const AddStudentForm = ({ kelasId, kelasNama, onClose, onSuccess }: Props) => {
       onSuccess();
       onClose();
     } catch (err: any) {
+      console.error('Excel upload error:', err);
       toast({ title: 'Gagal upload', description: err.message, variant: 'destructive' });
     }
     setSubmitting(false);
@@ -117,6 +164,10 @@ const AddStudentForm = ({ kelasId, kelasNama, onClose, onSuccess }: Props) => {
           {mode === 'manual' ? (
             <>
               <div>
+                <Label className="text-xs">NIS (Nomor Induk Siswa) - opsional</Label>
+                <Input value={nis} onChange={e => setNis(e.target.value)} placeholder="Contoh: 12345" />
+              </div>
+              <div>
                 <Label className="text-xs">Nama Lengkap *</Label>
                 <Input value={nama} onChange={e => setNama(e.target.value)} placeholder="Masukkan nama murid" />
               </div>
@@ -132,7 +183,7 @@ const AddStudentForm = ({ kelasId, kelasNama, onClose, onSuccess }: Props) => {
           ) : (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Upload file Excel (.xlsx) dengan kolom: <strong>Nama</strong> (wajib), <strong>No HP Ortu</strong> (opsional).
+                Upload file Excel (.xlsx) dengan kolom: <strong>NIS</strong> (opsional), <strong>Nama</strong> (wajib), <strong>No HP Ortu</strong> (opsional).
               </p>
               <Button size="sm" variant="outline" onClick={handleDownloadTemplate} className="w-full">
                 <Download className="w-3 h-3 mr-1" /> Download Template Excel

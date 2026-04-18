@@ -23,13 +23,17 @@ export type Database = {
           hafalan_ayat: string | null
           hafalan_jenis_setoran: string | null
           hafalan_juz: number | null
+          hafalan_kesalahan_fasohah: number | null
           hafalan_kesalahan_kelancaran: number | null
           hafalan_kesalahan_tajwid: number | null
+          hafalan_penilaian: string | null
           hafalan_predikat: string | null
           hafalan_surah: string | null
           id: string
           jilid_buku: string | null
           jilid_halaman: number | null
+          jilid_kesalahan_kelancaran: number | null
+          jilid_kesalahan_tajwid: number | null
           jilid_predikat: string | null
           siswa_id: string
           status: string | null
@@ -38,9 +42,12 @@ export type Database = {
           tahfidz_surah: string | null
           tanggal: string
           tilawah_ayat: string | null
+          tilawah_kesalahan_fasohah: number | null
           tilawah_kesalahan_kelancaran: number | null
           tilawah_kesalahan_tajwid: number | null
+          tilawah_penilaian: string | null
           tilawah_predikat: string | null
+          tilawah_tipe: string | null
           tilawah_surah: string | null
           tilpi_halaman: number | null
           tilpi_kategori: string | null
@@ -54,13 +61,17 @@ export type Database = {
           hafalan_ayat?: string | null
           hafalan_jenis_setoran?: string | null
           hafalan_juz?: number | null
+          hafalan_kesalahan_fasohah?: number | null
           hafalan_kesalahan_kelancaran?: number | null
           hafalan_kesalahan_tajwid?: number | null
+          hafalan_penilaian?: string | null
           hafalan_predikat?: string | null
           hafalan_surah?: string | null
           id?: string
           jilid_buku?: string | null
           jilid_halaman?: number | null
+          jilid_kesalahan_kelancaran?: number | null
+          jilid_kesalahan_tajwid?: number | null
           jilid_predikat?: string | null
           siswa_id: string
           status?: string | null
@@ -69,10 +80,13 @@ export type Database = {
           tahfidz_surah?: string | null
           tanggal: string
           tilawah_ayat?: string | null
+          tilawah_kesalahan_fasohah?: number | null
           tilawah_kesalahan_kelancaran?: number | null
           tilawah_kesalahan_tajwid?: number | null
+          tilawah_penilaian?: string | null
           tilawah_predikat?: string | null
           tilawah_surah?: string | null
+          tilawah_tipe?: string | null
           tilpi_halaman?: number | null
           tilpi_kategori?: string | null
           updated_at?: string
@@ -85,13 +99,17 @@ export type Database = {
           hafalan_ayat?: string | null
           hafalan_jenis_setoran?: string | null
           hafalan_juz?: number | null
+          hafalan_kesalahan_fasohah?: number | null
           hafalan_kesalahan_kelancaran?: number | null
           hafalan_kesalahan_tajwid?: number | null
+          hafalan_penilaian?: string | null
           hafalan_predikat?: string | null
           hafalan_surah?: string | null
           id?: string
           jilid_buku?: string | null
           jilid_halaman?: number | null
+          jilid_kesalahan_kelancaran?: number | null
+          jilid_kesalahan_tajwid?: number | null
           jilid_predikat?: string | null
           siswa_id?: string
           status?: string | null
@@ -100,10 +118,13 @@ export type Database = {
           tahfidz_surah?: string | null
           tanggal?: string
           tilawah_ayat?: string | null
+          tilawah_kesalahan_fasohah?: number | null
           tilawah_kesalahan_kelancaran?: number | null
           tilawah_kesalahan_tajwid?: number | null
+          tilawah_penilaian?: string | null
           tilawah_predikat?: string | null
           tilawah_surah?: string | null
+          tilawah_tipe?: string | null
           tilpi_halaman?: number | null
           tilpi_kategori?: string | null
           updated_at?: string
@@ -130,31 +151,40 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_active: boolean | null
           nama: string
           no_hp: string | null
+          password_hash: string | null
           photo_url: string | null
           updated_at: string
           user_id: string
+          username: string | null
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
+          is_active?: boolean | null
           nama: string
           no_hp?: string | null
+          password_hash?: string | null
           photo_url?: string | null
           updated_at?: string
           user_id: string
+          username?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          is_active?: boolean | null
           nama?: string
           no_hp?: string | null
+          password_hash?: string | null
           photo_url?: string | null
           updated_at?: string
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -194,6 +224,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          nama_lengkap: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
           user_id: string
@@ -201,6 +232,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          nama_lengkap?: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id: string
@@ -208,6 +240,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          nama_lengkap?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
@@ -221,6 +254,7 @@ export type Database = {
           kelas: string
           kelas_id: string | null
           nama: string
+          nis: string | null
           no_hp_ortu: string | null
           photo_url: string | null
           updated_at: string
@@ -232,6 +266,7 @@ export type Database = {
           kelas: string
           kelas_id?: string | null
           nama: string
+          nis?: string | null
           no_hp_ortu?: string | null
           photo_url?: string | null
           updated_at?: string
@@ -243,6 +278,7 @@ export type Database = {
           kelas?: string
           kelas_id?: string | null
           nama?: string
+          nis?: string | null
           no_hp_ortu?: string | null
           photo_url?: string | null
           updated_at?: string
@@ -269,6 +305,32 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      verify_guru_login: {
+        Args: {
+          p_username: string
+          p_password: string
+        }
+        Returns: {
+          id: string
+          nama: string
+          email: string
+          role: string
+          is_active: boolean
+        }[]
+      }
+      set_guru_password: {
+        Args: {
+          p_guru_id: string
+          p_password: string
+        }
+        Returns: boolean
+      }
+      generate_guru_username: {
+        Args: {
+          p_nama: string
+        }
+        Returns: string
       }
     }
     Enums: {
