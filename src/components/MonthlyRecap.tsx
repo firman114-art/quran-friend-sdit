@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Download, Calendar } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Download, Calendar, BookOpen } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
+import logoSekolah from '@/assets/logo-sekolah.jpg';
 
 interface SiswaRow {
   id: string;
@@ -37,15 +39,35 @@ interface Props {
 }
 
 const MonthlyRecap = ({ students, records, kelasNama }: Props) => {
+  const [periode, setPeriode] = useState<'bulan' | 'semester'>('bulan');
   const [bulan, setBulan] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [semester, setSemester] = useState('ganjil');
+  const [tahun, setTahun] = useState(new Date().getFullYear().toString());
   const [jumlahPertemuan, setJumlahPertemuan] = useState('');
   const recapRef = useRef<HTMLDivElement>(null);
 
   const totalPertemuan = jumlahPertemuan ? parseInt(jumlahPertemuan) : 0;
-  const monthRecords = records.filter(r => r.tanggal.startsWith(bulan));
+  
+  const getFilteredRecords = () => {
+    if (periode === 'bulan') {
+      return records.filter(r => r.tanggal.startsWith(bulan));
+    } else {
+      // Semester filter: Ganjil (Jan-Jun), Genap (Jul-Dec)
+      const year = parseInt(tahun);
+      const isGanjil = semester === 'ganjil';
+      return records.filter(r => {
+        const date = new Date(r.tanggal);
+        const dateYear = date.getFullYear();
+        const dateMonth = date.getMonth() + 1; // 1-12
+        return dateYear === year && (isGanjil ? dateMonth <= 6 : dateMonth >= 7);
+      });
+    }
+  };
+
+  const filteredRecords = getFilteredRecords();
 
   const studentRecaps = students.map(s => {
-    const sRecords = monthRecords.filter(r => r.siswa_id === s.id);
+    const sRecords = filteredRecords.filter(r => r.siswa_id === s.id);
     const kehadiran = new Set(sRecords.map(r => r.tanggal)).size;
     const persentase = totalPertemuan > 0 ? Math.round((kehadiran / totalPertemuan) * 100) : 0;
     const lastHafalan = sRecords.find(r => r.hafalan_surah);
@@ -81,34 +103,77 @@ const MonthlyRecap = ({ students, records, kelasNama }: Props) => {
         if (remaining > 0) pdf.addPage();
       }
     }
-    pdf.save(`Rekap_${kelasNama}_${bulan}.pdf`);
+    pdf.save(`Rekap_${kelasNama}_${periode === 'bulan' ? bulan : `${semester}_${tahun}`}.pdf`);
   };
 
   const handleDownloadJPEG = async () => {
     if (!recapRef.current) return;
     const canvas = await html2canvas(recapRef.current, { scale: 2, useCORS: true });
     const link = document.createElement('a');
-    link.download = `Rekap_${kelasNama}_${bulan}.jpeg`;
+    link.download = `Rekap_${kelasNama}_${periode === 'bulan' ? bulan : `${semester}_${tahun}`}.jpeg`;
     link.href = canvas.toDataURL('image/jpeg', 0.9);
     link.click();
   };
 
-  const monthLabel = new Date(bulan + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  const getPeriodeLabel = () => {
+    if (periode === 'bulan') {
+      return new Date(bulan + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    } else {
+      return `Semester ${semester === 'ganjil' ? 'Ganjil' : 'Genap'} Tahun ${tahun}`;
+    }
+  };
 
   return (
     <div className="space-y-4">
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Bulan</Label>
-              <Input type="month" value={bulan} onChange={e => setBulan(e.target.value)} />
-            </div>
-            <div>
-              <Label className="text-xs">Jumlah Pertemuan</Label>
-              <Input type="number" placeholder="0" value={jumlahPertemuan} onChange={e => setJumlahPertemuan(e.target.value)} />
-            </div>
+          <div>
+            <Label className="text-xs">Periode</Label>
+            <Select value={periode} onValueChange={(v: 'bulan' | 'semester') => setPeriode(v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bulan">Bulanan</SelectItem>
+                <SelectItem value="semester">Semester</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+          {periode === 'bulan' ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Bulan</Label>
+                <Input type="month" value={bulan} onChange={e => setBulan(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Jumlah Pertemuan</Label>
+                <Input type="number" placeholder="0" value={jumlahPertemuan} onChange={e => setJumlahPertemuan(e.target.value)} />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Semester</Label>
+                <Select value={semester} onValueChange={setSemester}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ganjil">Ganjil (Jan-Jun)</SelectItem>
+                    <SelectItem value="genap">Genap (Jul-Des)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Tahun</Label>
+                <Input type="number" value={tahun} onChange={e => setTahun(e.target.value)} />
+              </div>
+              <div className="col-span-2">
+                <Label className="text-xs">Jumlah Pertemuan</Label>
+                <Input type="number" placeholder="0" value={jumlahPertemuan} onChange={e => setJumlahPertemuan(e.target.value)} />
+              </div>
+            </div>
+          )}
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={handleDownloadPDF} className="flex-1">
               <Download className="w-3 h-3 mr-1" /> PDF
@@ -122,8 +187,10 @@ const MonthlyRecap = ({ students, records, kelasNama }: Props) => {
 
       <div ref={recapRef} className="space-y-3 bg-background p-3">
         <div className="text-center mb-4">
-          <h3 className="font-bold text-lg">Rekap Bulanan — {kelasNama}</h3>
-          <p className="text-sm text-muted-foreground">{monthLabel}</p>
+          <img src={logoSekolah} alt="Logo SDIT Al-Insan" className="w-16 h-16 mx-auto mb-2 rounded-full object-cover" />
+          <h3 className="font-bold text-lg">E-Rapor — {kelasNama}</h3>
+          <p className="text-sm text-muted-foreground">SDIT Al-Insan Pinrang</p>
+          <p className="text-xs text-muted-foreground">{getPeriodeLabel()}</p>
           {totalPertemuan > 0 && <p className="text-xs text-muted-foreground">Total Pertemuan: {totalPertemuan}</p>}
         </div>
 

@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, LogOut, Users, Plus, UserPlus, FolderPlus, ClipboardList, Calendar, Download, Trash2 } from 'lucide-react';
+import { BookOpen, LogOut, Users, Plus, UserPlus, FolderPlus, ClipboardList, Calendar, Download, Trash2, Check, Clock } from 'lucide-react';
 import DailyInputForm from '@/components/DailyInputForm';
 import AddStudentForm from '@/components/AddStudentForm';
 import MonthlyRecap from '@/components/MonthlyRecap';
+import JurnalKelasForm from '@/components/JurnalKelasForm';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
@@ -36,12 +37,15 @@ interface RecordRow {
   tanggal: string;
   hafalan_surah: string | null;
   hafalan_ayat: string | null;
+  hafalan_penilaian: string | null;
   hafalan_predikat: string | null;
   tilawah_surah: string | null;
   tilawah_ayat: string | null;
+  tilawah_penilaian: string | null;
   tilawah_predikat: string | null;
   jilid_buku: string | null;
   jilid_halaman: number | null;
+  jilid_penilaian: string | null;
   jilid_predikat: string | null;
   catatan_guru: string | null;
 }
@@ -72,6 +76,7 @@ const GuruDashboard = () => {
   const [newKelasName, setNewKelasName] = useState('');
   const [showRecap, setShowRecap] = useState(false);
   const [showJurnalForm, setShowJurnalForm] = useState(false);
+  const [showJurnalKelasForm, setShowJurnalKelasForm] = useState(false);
   const [jurnalTanggal, setJurnalTanggal] = useState(new Date().toISOString().split('T')[0]);
   const [jurnalHafalan, setJurnalHafalan] = useState('');
   const [jurnalTilawah, setJurnalTilawah] = useState('');
@@ -114,6 +119,12 @@ const GuruDashboard = () => {
     ]);
     if (studentsRes.data) setStudents(studentsRes.data as any);
     if (recordsRes.data) setRecords(recordsRes.data as any);
+  };
+
+  const getTodaySetoranStatus = (studentId: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayRecords = records.filter(r => r.siswa_id === studentId && r.tanggal === today);
+    return todayRecords.length > 0;
   };
 
   const fetchJurnals = async () => {
@@ -262,14 +273,26 @@ const GuruDashboard = () => {
                       const lastTilawah = studentRecords.find(r => r.tilawah_surah);
                       const lastJilid = studentRecords.find(r => r.jilid_buku);
                       const latest = studentRecords[0];
+                      const hasSetoranToday = getTodaySetoranStatus(student.id);
                       return (
                         <div key={student.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
                           <div className="flex-1">
-                            <p className="font-medium text-sm">{student.nama}</p>
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-medium text-sm">{student.nama}</p>
+                              {hasSetoranToday ? (
+                                <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-xs">
+                                  <Check className="w-3 h-3 mr-1" /> Sudah
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20 text-xs">
+                                  <Clock className="w-3 h-3 mr-1" /> Belum
+                                </Badge>
+                              )}
+                            </div>
                             <div className="text-xs text-muted-foreground space-y-1">
-                              {lastHafalan && <p>🕌 {lastHafalan.hafalan_surah} {lastHafalan.hafalan_predikat && `(${lastHafalan.hafalan_predikat})`}</p>}
-                              {lastTilawah && <p>📖 {lastTilawah.tilawah_surah} {lastTilawah.tilawah_predikat && `(${lastTilawah.tilawah_predikat})`}</p>}
-                              {lastJilid && <p>📕 {lastJilid.jilid_buku} Hal. {lastJilid.jilid_halaman} {lastJilid.jilid_predikat && `(${lastJilid.jilid_predikat})`}</p>}
+                              {lastHafalan && <p>🕌 {lastHafalan.hafalan_surah} {lastHafalan.hafalan_penilaian && `(${lastHafalan.hafalan_penilaian})`}</p>}
+                              {lastTilawah && <p>📖 {lastTilawah.tilawah_surah} {lastTilawah.tilawah_penilaian && `(${lastTilawah.tilawah_penilaian})`}</p>}
+                              {lastJilid && <p>📕 {lastJilid.jilid_buku} Hal. {lastJilid.jilid_halaman} {lastJilid.jilid_penilaian && `(${lastJilid.jilid_penilaian})`}</p>}
                               {!lastHafalan && !lastTilawah && !lastJilid && <p>Belum ada catatan</p>}
                             </div>
                           </div>
@@ -313,9 +336,14 @@ const GuruDashboard = () => {
               <Card className="border-0 shadow-sm">
                 <CardHeader className="pb-3 flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">Jurnal Pembelajaran — {currentKelas.nama_kelas}</CardTitle>
-                  <Button size="sm" className="gradient-hero text-primary-foreground" onClick={() => setShowJurnalForm(true)}>
-                    <Plus className="w-4 h-4 mr-1" /> Tambah
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setShowJurnalKelasForm(true)}>
+                      <Calendar className="w-4 h-4 mr-1" /> Jurnal Kelas
+                    </Button>
+                    <Button size="sm" className="gradient-hero text-primary-foreground" onClick={() => setShowJurnalForm(true)}>
+                      <Plus className="w-4 h-4 mr-1" /> Tambah
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {jurnals.length === 0 ? (
@@ -429,6 +457,15 @@ const GuruDashboard = () => {
             </CardContent>
           </Card>
         </div>
+      )}
+      {showJurnalKelasForm && currentKelas && guruData && (
+        <JurnalKelasForm
+          kelasId={currentKelas.id}
+          kelasNama={currentKelas.nama_kelas}
+          guruId={guruData.id}
+          onClose={() => setShowJurnalKelasForm(false)}
+          onSuccess={() => {}}
+        />
       )}
     </div>
   );

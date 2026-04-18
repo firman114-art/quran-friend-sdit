@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PREDIKAT_OPTIONS, JENIS_SETORAN_OPTIONS, JILID_OPTIONS } from '@/lib/data';
 import { JUZ_DATA, getSurahByJuz } from '@/lib/quran-data';
 import { supabase } from '@/integrations/supabase/client';
-import { X, Save, MessageCircle, CheckCircle2, Minus, Plus } from 'lucide-react';
+import { X, Save, MessageCircle, CheckCircle2, Minus, Plus, BookOpen, Book } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface StudentInfo {
   id: string;
@@ -53,6 +54,7 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
   const [hafalanKesalahanKelancaran, setHafalanKesalahanKelancaran] = useState(0);
   const [hafalanKesalahanFasohah, setHafalanKesalahanFasohah] = useState(0);
   // Tilawah
+  const [tilawahTipe, setTilawahTipe] = useState<'quran' | 'jilid'>('quran');
   const [tilawahJuz, setTilawahJuz] = useState('');
   const [tilawahSurah, setTilawahSurah] = useState('');
   const [tilawahAyat, setTilawahAyat] = useState('');
@@ -245,7 +247,9 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
   const handleSubmit = async () => {
     // At least one section must be filled
     const hasHafalan = hafalanSurah && hafalanAyat;
-    const hasTilawah = tilawahSurah && tilawahAyat;
+    const hasTilawahQuran = tilawahTipe === 'quran' && tilawahSurah && tilawahAyat;
+    const hasTilawahJilid = tilawahTipe === 'jilid' && tilawahSurah && tilawahAyat;
+    const hasTilawah = hasTilawahQuran || hasTilawahJilid;
     const hasJilid = jilidBuku && jilidHalaman;
 
     if (!hasHafalan && !hasTilawah && !hasJilid) {
@@ -261,22 +265,24 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
       hafalan_juz: hafalanJuz ? parseInt(hafalanJuz) : null,
       hafalan_surah: hafalanSurah || null,
       hafalan_ayat: hafalanAyat || null,
-      hafalan_predikat: hafalanPredikat || null,
-      hafalan_jenis_setoran: hafalanJenisSetoran || null,
+      hafalan_penilaian: hafalanPredikat || null,
+      hafalan_jenis: hafalanJenisSetoran || null,
       hafalan_kesalahan_tajwid: hafalanKesalahanTajwid,
       hafalan_kesalahan_kelancaran: hafalanKesalahanKelancaran,
       hafalan_kesalahan_fasohah: hafalanKesalahanFasohah,
+      tilawah_tipe: tilawahTipe || null,
+      tilawah_juz: tilawahTipe === 'quran' && tilawahJuz ? parseInt(tilawahJuz) : null,
       tilawah_surah: tilawahSurah || null,
       tilawah_ayat: tilawahAyat || null,
-      tilawah_predikat: tilawahPredikat || null,
+      tilawah_penilaian: tilawahPredikat || null,
       tilawah_kesalahan_tajwid: tilawahKesalahanTajwid,
       tilawah_kesalahan_kelancaran: tilawahKesalahanKelancaran,
       tilawah_kesalahan_fasohah: tilawahKesalahanFasohah,
-      jilid_buku: jilidBuku || null,
-      jilid_halaman: jilidHalaman ? parseInt(jilidHalaman) : null,
-      jilid_predikat: jilidPredikat || null,
-      jilid_kesalahan_tajwid: jilidKesalahanTajwid,
-      jilid_kesalahan_kelancaran: jilidKesalahanKelancaran,
+      jilid_buku: tilawahTipe === 'jilid' ? tilawahSurah : (jilidBuku || null),
+      jilid_halaman: tilawahTipe === 'jilid' ? (tilawahAyat ? parseInt(tilawahAyat) : null) : (jilidHalaman ? parseInt(jilidHalaman) : null),
+      jilid_penilaian: tilawahTipe === 'jilid' ? tilawahPredikat : (jilidPredikat || null),
+      jilid_kesalahan_tajwid: tilawahTipe === 'jilid' ? tilawahKesalahanTajwid : jilidKesalahanTajwid,
+      jilid_kesalahan_kelancaran: tilawahTipe === 'jilid' ? tilawahKesalahanKelancaran : jilidKesalahanKelancaran,
       catatan_guru: catatanGuru || null,
     } as any);
     setSaving(false);
@@ -338,121 +344,139 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
             <Input type="date" value={tanggal} onChange={e => setTanggal(e.target.value)} />
           </div>
 
-          {/* HAFALAN */}
-          <div className="p-3 rounded-lg bg-secondary space-y-3">
-            <p className="font-semibold text-sm text-secondary-foreground">🕌 Hafalan</p>
-            <div>
-              <Label className="text-xs">Jenis Setoran</Label>
-              <Select value={hafalanJenisSetoran} onValueChange={setHafalanJenisSetoran}>
-                <SelectTrigger><SelectValue placeholder="Pilih jenis..." /></SelectTrigger>
-                <SelectContent>
-                  {JENIS_SETORAN_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Juz</Label>
-              <Select value={hafalanJuz} onValueChange={v => { setHafalanJuz(v); setHafalanSurah(''); }}>
-                <SelectTrigger><SelectValue placeholder="Pilih Juz..." /></SelectTrigger>
-                <SelectContent>
-                  {JUZ_DATA.map(j => <SelectItem key={j.nomor} value={String(j.nomor)}>Juz {j.nomor}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Surah</Label>
-              <Select value={hafalanSurah} onValueChange={setHafalanSurah} disabled={!hafalanJuz}>
-                <SelectTrigger><SelectValue placeholder={hafalanJuz ? 'Pilih Surah...' : 'Pilih Juz dulu'} /></SelectTrigger>
-                <SelectContent>
-                  {hafalanSurahList.map(s => <SelectItem key={s.nama} value={s.nama}>{s.nama}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Ayat (angka saja)</Label>
-              <Input placeholder="Contoh: 1-7" value={hafalanAyat} onChange={e => setHafalanAyat(e.target.value.replace(/[^0-9\-,]/g, ''))} disabled={!hafalanSurah} />
-            </div>
-            <div>
-              <Label className="text-xs">Predikat</Label>
-              <Select value={hafalanPredikat} onValueChange={setHafalanPredikat}>
-                <SelectTrigger><SelectValue placeholder="Pilih predikat..." /></SelectTrigger>
-                <SelectContent>
-                  {PREDIKAT_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <ErrorCounter label="Kesalahan Tajwid" value={hafalanKesalahanTajwid} onChange={setHafalanKesalahanTajwid} />
-            <ErrorCounter label="Kesalahan Kelancaran" value={hafalanKesalahanKelancaran} onChange={setHafalanKesalahanKelancaran} />
-            <ErrorCounter label="Kesalahan Fasohah" value={hafalanKesalahanFasohah} onChange={setHafalanKesalahanFasohah} />
-          </div>
+          <Tabs defaultValue="hafalan" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="hafalan">🕌 Hafalan</TabsTrigger>
+              <TabsTrigger value="tilawah">📖 Tilawah</TabsTrigger>
+            </TabsList>
+            
+            {/* HAFALAN TAB */}
+            <TabsContent value="hafalan" className="space-y-3 pt-3">
+              <div className="p-3 rounded-lg bg-secondary space-y-3">
+                <div>
+                  <Label className="text-xs">Jenis Setoran</Label>
+                  <Select value={hafalanJenisSetoran} onValueChange={setHafalanJenisSetoran}>
+                    <SelectTrigger><SelectValue placeholder="Pilih jenis..." /></SelectTrigger>
+                    <SelectContent>
+                      {JENIS_SETORAN_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Juz</Label>
+                  <Select value={hafalanJuz} onValueChange={v => { setHafalanJuz(v); setHafalanSurah(''); }}>
+                    <SelectTrigger><SelectValue placeholder="Pilih Juz..." /></SelectTrigger>
+                    <SelectContent>
+                      {JUZ_DATA.map(j => <SelectItem key={j.nomor} value={String(j.nomor)}>Juz {j.nomor}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Surah</Label>
+                  <Select value={hafalanSurah} onValueChange={setHafalanSurah} disabled={!hafalanJuz}>
+                    <SelectTrigger><SelectValue placeholder={hafalanJuz ? 'Pilih Surah...' : 'Pilih Juz dulu'} /></SelectTrigger>
+                    <SelectContent>
+                      {hafalanSurahList.map(s => <SelectItem key={s.nama} value={s.nama}>{s.nama}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Ayat (angka saja)</Label>
+                  <Input placeholder="Contoh: 1-7" value={hafalanAyat} onChange={e => setHafalanAyat(e.target.value.replace(/[^0-9\-,]/g, ''))} disabled={!hafalanSurah} />
+                </div>
+                <div>
+                  <Label className="text-xs">Penilaian</Label>
+                  <Select value={hafalanPredikat} onValueChange={setHafalanPredikat}>
+                    <SelectTrigger><SelectValue placeholder="Pilih penilaian..." /></SelectTrigger>
+                    <SelectContent>
+                      {PREDIKAT_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 pt-2">
+                  <p className="text-xs font-medium text-muted-foreground">Perhitungan Kesalahan</p>
+                  <ErrorCounter label="Tajwid" value={hafalanKesalahanTajwid} onChange={setHafalanKesalahanTajwid} />
+                  <ErrorCounter label="Kelancaran" value={hafalanKesalahanKelancaran} onChange={setHafalanKesalahanKelancaran} />
+                  <ErrorCounter label="Fasohah" value={hafalanKesalahanFasohah} onChange={setHafalanKesalahanFasohah} />
+                </div>
+              </div>
+            </TabsContent>
 
-          {/* TILAWAH */}
-          <div className="p-3 rounded-lg bg-secondary space-y-3">
-            <p className="font-semibold text-sm text-secondary-foreground">📖 Tilawah</p>
-            <div>
-              <Label className="text-xs">Juz</Label>
-              <Select value={tilawahJuz} onValueChange={v => { setTilawahJuz(v); setTilawahSurah(''); }}>
-                <SelectTrigger><SelectValue placeholder="Pilih Juz..." /></SelectTrigger>
-                <SelectContent>
-                  {JUZ_DATA.map(j => <SelectItem key={j.nomor} value={String(j.nomor)}>Juz {j.nomor}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Surah</Label>
-              <Select value={tilawahSurah} onValueChange={setTilawahSurah} disabled={!tilawahJuz}>
-                <SelectTrigger><SelectValue placeholder={tilawahJuz ? 'Pilih Surah...' : 'Pilih Juz dulu'} /></SelectTrigger>
-                <SelectContent>
-                  {tilawahSurahList.map(s => <SelectItem key={s.nama} value={s.nama}>{s.nama}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Ayat (angka saja)</Label>
-              <Input placeholder="Contoh: 1-10" value={tilawahAyat} onChange={e => setTilawahAyat(e.target.value.replace(/[^0-9\-,]/g, ''))} disabled={!tilawahSurah} />
-            </div>
-            <div>
-              <Label className="text-xs">Predikat</Label>
-              <Select value={tilawahPredikat} onValueChange={setTilawahPredikat}>
-                <SelectTrigger><SelectValue placeholder="Pilih predikat..." /></SelectTrigger>
-                <SelectContent>
-                  {PREDIKAT_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <ErrorCounter label="Kesalahan Tajwid" value={tilawahKesalahanTajwid} onChange={setTilawahKesalahanTajwid} />
-            <ErrorCounter label="Kesalahan Kelancaran" value={tilawahKesalahanKelancaran} onChange={setTilawahKesalahanKelancaran} />
-            <ErrorCounter label="Kesalahan Fasohah" value={tilawahKesalahanFasohah} onChange={setTilawahKesalahanFasohah} />
-          </div>
+            {/* TILAWAH TAB */}
+            <TabsContent value="tilawah" className="space-y-3 pt-3">
+              <div className="p-3 rounded-lg bg-secondary space-y-3">
+                <div>
+                  <Label className="text-xs">Tipe Tilawah</Label>
+                  <Select value={tilawahTipe} onValueChange={(v: 'quran' | 'jilid') => setTilawahTipe(v)}>
+                    <SelectTrigger><SelectValue placeholder="Pilih tipe..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="quran"><BookOpen className="w-4 h-4 mr-2" /> Al-Quran</SelectItem>
+                      <SelectItem value="jilid"><Book className="w-4 h-4 mr-2" /> Buku Jilid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-          {/* JILID */}
-          <div className="p-3 rounded-lg bg-secondary space-y-3">
-            <p className="font-semibold text-sm text-secondary-foreground">📕 Tilawah Buku Jilid</p>
-            <div>
-              <Label className="text-xs">Buku Jilid</Label>
-              <Select value={jilidBuku} onValueChange={setJilidBuku}>
-                <SelectTrigger><SelectValue placeholder="Pilih jilid..." /></SelectTrigger>
-                <SelectContent>
-                  {JILID_OPTIONS.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Halaman (angka saja)</Label>
-              <Input placeholder="1" value={jilidHalaman} onChange={e => setJilidHalaman(e.target.value.replace(/[^0-9]/g, ''))} />
-            </div>
-            <div>
-              <Label className="text-xs">Predikat</Label>
-              <Select value={jilidPredikat} onValueChange={setJilidPredikat}>
-                <SelectTrigger><SelectValue placeholder="Pilih predikat..." /></SelectTrigger>
-                <SelectContent>
-                  {PREDIKAT_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <ErrorCounter label="Kesalahan Tajwid" value={jilidKesalahanTajwid} onChange={setJilidKesalahanTajwid} />
-            <ErrorCounter label="Kesalahan Kelancaran" value={jilidKesalahanKelancaran} onChange={setJilidKesalahanKelancaran} />
-          </div>
+                {tilawahTipe === 'quran' ? (
+                  <>
+                    <div>
+                      <Label className="text-xs">Juz</Label>
+                      <Select value={tilawahJuz} onValueChange={v => { setTilawahJuz(v); setTilawahSurah(''); }}>
+                        <SelectTrigger><SelectValue placeholder="Pilih Juz..." /></SelectTrigger>
+                        <SelectContent>
+                          {JUZ_DATA.map(j => <SelectItem key={j.nomor} value={String(j.nomor)}>Juz {j.nomor}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Surah</Label>
+                      <Select value={tilawahSurah} onValueChange={setTilawahSurah} disabled={!tilawahJuz}>
+                        <SelectTrigger><SelectValue placeholder={tilawahJuz ? 'Pilih Surah...' : 'Pilih Juz dulu'} /></SelectTrigger>
+                        <SelectContent>
+                          {tilawahSurahList.map(s => <SelectItem key={s.nama} value={s.nama}>{s.nama}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Ayat (angka saja)</Label>
+                      <Input placeholder="Contoh: 1-10" value={tilawahAyat} onChange={e => setTilawahAyat(e.target.value.replace(/[^0-9\-,]/g, ''))} disabled={!tilawahSurah} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <Label className="text-xs">Buku Jilid</Label>
+                      <Select value={tilawahSurah} onValueChange={setTilawahSurah}>
+                        <SelectTrigger><SelectValue placeholder="Pilih jilid..." /></SelectTrigger>
+                        <SelectContent>
+                          {JILID_OPTIONS.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Halaman (angka saja)</Label>
+                      <Input placeholder="1" value={tilawahAyat} onChange={e => setTilawahAyat(e.target.value.replace(/[^0-9]/g, ''))} />
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <Label className="text-xs">Penilaian</Label>
+                  <Select value={tilawahPredikat} onValueChange={setTilawahPredikat}>
+                    <SelectTrigger><SelectValue placeholder="Pilih penilaian..." /></SelectTrigger>
+                    <SelectContent>
+                      {PREDIKAT_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 pt-2">
+                  <p className="text-xs font-medium text-muted-foreground">Perhitungan Kesalahan</p>
+                  <ErrorCounter label="Tajwid" value={tilawahKesalahanTajwid} onChange={setTilawahKesalahanTajwid} />
+                  <ErrorCounter label="Kelancaran" value={tilawahKesalahanKelancaran} onChange={setTilawahKesalahanKelancaran} />
+                  <ErrorCounter label="Fasohah" value={tilawahKesalahanFasohah} onChange={setTilawahKesalahanFasohah} />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
 
           {/* CATATAN */}
           <div>

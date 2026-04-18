@@ -8,6 +8,7 @@ import { ArrowLeft, BookOpen, Star, MessageCircle, Download } from 'lucide-react
 import { getPredikatLabel } from '@/lib/data';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface SiswaInfo {
   id: string;
@@ -118,6 +119,24 @@ const MuridDetail = () => {
 
   const lastTwo = records.slice(0, 2);
 
+  // Calculate monthly attendance data
+  const monthlyData = (() => {
+    const monthly: { [key: string]: number } = {};
+    records.forEach(r => {
+      const month = r.tanggal.substring(0, 7); // YYYY-MM
+      monthly[month] = (monthly[month] || 0) + 1;
+    });
+    const sortedMonths = Object.entries(monthly).sort((a, b) => a[0].localeCompare(b[0]));
+    const monthNames: { [key: string]: string } = {
+      '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'Mei', '06': 'Jun',
+      '07': 'Jul', '08': 'Agu', '09': 'Sep', '10': 'Okt', '11': 'Nov', '12': 'Des'
+    };
+    return sortedMonths.slice(-6).map(([month, count]) => ({
+      name: monthNames[month.substring(5)] || month.substring(5),
+      kehadiran: count
+    }));
+  })();
+
   return (
     <div className="min-h-screen bg-background">
       <header className="gradient-hero text-primary-foreground py-4">
@@ -150,6 +169,25 @@ const MuridDetail = () => {
               </CardContent>
             </Card>
           </div>
+
+          {monthlyData.length > 0 && (
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Grafik Kehadiran (6 Bulan Terakhir)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={monthlyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="kehadiran" fill="hsl(var(--primary))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-2">

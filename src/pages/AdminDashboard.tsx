@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff, LogOut, Users, GraduationCap, BookOpen, UserPlus, Shield } from 'lucide-react';
+import { Eye, EyeOff, LogOut, Users, GraduationCap, BookOpen, UserPlus, Shield, TrendingUp, Activity, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MonthlyRecap from '@/components/MonthlyRecap';
 import AddStudentForm from '@/components/AddStudentForm';
@@ -93,6 +93,24 @@ const AdminDashboard = () => {
     if (recRes.data) setRecords(recRes.data as any);
   };
 
+  const getTodayRecords = () => {
+    const today = new Date().toISOString().split('T')[0];
+    return records.filter(r => r.tanggal === today).length;
+  };
+
+  const getMonthRecords = () => {
+    const thisMonth = new Date().toISOString().substring(0, 7);
+    return records.filter(r => r.tanggal.startsWith(thisMonth)).length;
+  };
+
+  const getActiveStudents = () => {
+    const thisMonth = new Date().toISOString().substring(0, 7);
+    const activeStudentIds = new Set(
+      records.filter(r => r.tanggal.startsWith(thisMonth)).map(r => r.siswa_id)
+    );
+    return activeStudentIds.size;
+  };
+
   const handleAddGuru = async () => {
     if (!guruNama || !guruEmail || !guruPassword) {
       toast({ title: 'Lengkapi semua field!', variant: 'destructive' });
@@ -166,6 +184,30 @@ const AdminDashboard = () => {
               <Users className="w-6 h-6 mx-auto text-primary mb-1" />
               <p className="text-2xl font-bold">{students.length}</p>
               <p className="text-xs text-muted-foreground">Murid</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4 text-center">
+              <Activity className="w-6 h-6 mx-auto text-success mb-1" />
+              <p className="text-2xl font-bold">{getTodayRecords()}</p>
+              <p className="text-xs text-muted-foreground">Setoran Hari Ini</p>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4 text-center">
+              <Calendar className="w-6 h-6 mx-auto text-primary mb-1" />
+              <p className="text-2xl font-bold">{getMonthRecords()}</p>
+              <p className="text-xs text-muted-foreground">Setoran Bulan Ini</p>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4 text-center">
+              <TrendingUp className="w-6 h-6 mx-auto text-accent mb-1" />
+              <p className="text-2xl font-bold">{getActiveStudents()}</p>
+              <p className="text-xs text-muted-foreground">Murid Aktif</p>
             </CardContent>
           </Card>
         </div>

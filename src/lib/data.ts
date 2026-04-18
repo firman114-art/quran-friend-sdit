@@ -1,19 +1,19 @@
 export type UserRole = 'guru' | 'siswa' | 'admin';
 
-export type Predikat = 'A' | 'B' | 'C' | 'D';
-export type JenisSetoran = 'Ziyadah' | 'Murajaah' | 'Talaqqi/Aradh';
+export type Predikat = 'Mumtaz' | 'Jayyid Jiddan' | 'Jayyid' | 'Maqbul';
+export type JenisSetoran = 'Ziyadah' | 'Murojaa' | 'Talaqqi';
 
 export const PREDIKAT_OPTIONS: { value: Predikat; label: string }[] = [
-  { value: 'A', label: 'A - Mumtaz (Sangat Baik)' },
-  { value: 'B', label: 'B - Jayyid Jiddan (Baik Sekali)' },
-  { value: 'C', label: 'C - Jayyid (Baik)' },
-  { value: 'D', label: 'D - Maqbul (Cukup)' },
+  { value: 'Mumtaz', label: 'Mumtaz (Sangat Baik)' },
+  { value: 'Jayyid Jiddan', label: 'Jayyid Jiddan (Baik Sekali)' },
+  { value: 'Jayyid', label: 'Jayyid (Baik)' },
+  { value: 'Maqbul', label: 'Maqbul (Cukup)' },
 ];
 
 export const JENIS_SETORAN_OPTIONS: { value: JenisSetoran; label: string }[] = [
   { value: 'Ziyadah', label: 'Ziyadah (Hafalan Baru)' },
-  { value: 'Murajaah', label: 'Murajaah (Ulang Hafalan Lama)' },
-  { value: 'Talaqqi/Aradh', label: 'Talaqqi/Aradh (Simakan Guru)' },
+  { value: 'Murojaa', label: 'Murojaa (Ulang Hafalan Lama)' },
+  { value: 'Talaqqi', label: 'Talaqqi (Simakan Guru)' },
 ];
 
 export const JILID_OPTIONS = ['Jilid 1', 'Jilid 2', 'Jilid 3', 'Jilid 4', 'Jilid 5'];
