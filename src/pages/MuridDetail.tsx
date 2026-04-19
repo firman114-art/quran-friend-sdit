@@ -117,6 +117,7 @@ const MuridDetail = () => {
   if (!siswa) return <div className="min-h-screen flex items-center justify-center"><p>Murid tidak ditemukan.</p></div>;
 
   const lastTwo = records.slice(0, 2);
+  const lastTilawah = records.find(r => r.tilawah_surah || r.tilawah_ayat);
 
   // Calculate monthly attendance data
   const monthlyData = (() => {
@@ -152,6 +153,18 @@ const MuridDetail = () => {
 
       <main className="container mx-auto px-4 py-6 max-w-lg space-y-4">
         <div ref={reportRef} className="space-y-4 bg-background p-2">
+          {lastTilawah && (
+            <Card className="border-0 shadow-sm bg-primary/5">
+              <CardContent className="p-4">
+                <p className="text-xs font-medium text-primary mb-1">📖 Tilawah Terakhir</p>
+                <p className="text-sm font-semibold">{lastTilawah.tilawah_surah || '-'} Ayat {lastTilawah.tilawah_ayat || '-'}</p>
+                {lastTilawah.tilawah_predikat && (
+                  <Badge className="mt-2 text-xs bg-primary/10 text-primary">{lastTilawah.tilawah_predikat}</Badge>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">{lastTilawah.tanggal}</p>
+              </CardContent>
+            </Card>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4 text-center">

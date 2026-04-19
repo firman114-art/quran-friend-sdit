@@ -51,6 +51,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen islamic-pattern">
+      <div className="text-center py-4 text-sm text-muted-foreground">
+        بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
+      </div>
       <header className="gradient-hero text-primary-foreground py-4 relative z-50">
         <div className="container mx-auto px-4 flex items-center justify-between">
           {/* Kiri: Logo + Nama */}

@@ -87,7 +87,7 @@ const AdminDashboard = () => {
 
   const fetchAll = async () => {
     const [guruRes, kelasRes, siswaRes, recRes, semesterRes] = await Promise.all([
-      supabase.from('guru').select('*').order('nama'),
+      supabase.from('guru').select('id, nama, email, user_id, username, password_plain').order('nama'),
       supabase.from('kelas').select('*').order('nama_kelas'),
       supabase.from('siswa').select('*').order('nama'),
       supabase.from('daily_records').select('*').order('tanggal', { ascending: false }),
