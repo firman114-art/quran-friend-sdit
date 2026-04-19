@@ -15,8 +15,11 @@ INSERT INTO public.pengaturan (key, value, deskripsi)
 VALUES ('semester_aktif', 'GANJIL', 'Semester yang sedang berjalan (GANJIL/GENAP)')
 ON CONFLICT (key) DO NOTHING;
 
+-- Drop existing pengumuman table if it exists (to recreate with proper schema)
+DROP TABLE IF EXISTS public.pengumuman CASCADE;
+
 -- Create table for announcements
-CREATE TABLE IF NOT EXISTS public.pengumuman (
+CREATE TABLE public.pengumuman (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   judul VARCHAR(200) NOT NULL,
   isi TEXT NOT NULL,
@@ -29,6 +32,12 @@ CREATE TABLE IF NOT EXISTS public.pengumuman (
 -- Enable RLS
 ALTER TABLE public.pengaturan ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pengumuman ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if any
+DROP POLICY IF EXISTS "Allow admin manage pengaturan" ON public.pengaturan;
+DROP POLICY IF EXISTS "Allow all view pengaturan" ON public.pengaturan;
+DROP POLICY IF EXISTS "Allow admin manage pengumuman" ON public.pengumuman;
+DROP POLICY IF EXISTS "Allow all view active pengumuman" ON public.pengumuman;
 
 -- Policies for pengaturan (admin can manage, all can view)
 CREATE POLICY "Allow admin manage pengaturan" ON public.pengaturan
