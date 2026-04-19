@@ -17,6 +17,8 @@ interface GuruRow {
   nama: string;
   email: string;
   user_id: string;
+  username: string | null;
+  password_plain: string | null;
 }
 
 interface KelasRow {
@@ -57,7 +59,10 @@ const AdminDashboard = () => {
   const [kelasList, setKelasList] = useState<KelasRow[]>([]);
   const [students, setStudents] = useState<SiswaRow[]>([]);
   const [records, setRecords] = useState<RecordRow[]>([]);
-  const [tab, setTab] = useState<'guru' | 'kelas' | 'murid' | 'recap'>('guru');
+  const [tab, setTab] = useState<'guru' | 'kelas' | 'murid' | 'recap' | 'pengaturan'>('guru');
+  const [semesterAktif, setSemesterAktif] = useState('GANJIL');
+  const [pengumumanList, setPengumumanList] = useState<any[]>([]);
+  const [newPengumuman, setNewPengumuman] = useState({ judul: '', isi: '', tipe: 'info' });
   const [selectedKelasId, setSelectedKelasId] = useState('');
   const [selectedKelasIdForMurid, setSelectedKelasIdForMurid] = useState('');
   // Add guru form
@@ -81,16 +86,18 @@ const AdminDashboard = () => {
   }, [profile]);
 
   const fetchAll = async () => {
-    const [guruRes, kelasRes, siswaRes, recRes] = await Promise.all([
+    const [guruRes, kelasRes, siswaRes, recRes, semesterRes] = await Promise.all([
       supabase.from('guru').select('*').order('nama'),
       supabase.from('kelas').select('*').order('nama_kelas'),
       supabase.from('siswa').select('*').order('nama'),
       supabase.from('daily_records').select('*').order('tanggal', { ascending: false }),
+      supabase.from('pengaturan' as any).select('*').eq('key', 'semester_aktif').maybeSingle(),
     ]);
     if (guruRes.data) setGuruList(guruRes.data as any);
     if (kelasRes.data) setKelasList(kelasRes.data as any);
     if (siswaRes.data) setStudents(siswaRes.data as any);
     if (recRes.data) setRecords(recRes.data as any);
+    if (semesterRes.data?.value) setSemesterAktif(semesterRes.data.value);
   };
 
   const getTodayRecords = () => {
@@ -163,14 +170,16 @@ const AdminDashboard = () => {
       const guruId = crypto.randomUUID();
       
       // Insert into guru table with username and password (no user_id for username-based auth)
-      const { error: guruError } = await supabase.from('guru').insert({
+      const { error: guruError } = await (supabase.from('guru' as any).insert({
         id: guruId,
+        user_id: guruId,
         nama: guruNama,
         email: `${finalUsername}@sdit.local`, // Dummy email
         username: finalUsername,
         password_hash: password, // Will be hashed by SQL function
+        password_plain: password, // Store plain password for admin view
         is_active: true
-      });
+      }));
       
       if (guruError) {
         console.error('Error inserting guru:', guruError);
@@ -311,6 +320,10 @@ const AdminDashboard = () => {
             className={tab === 'recap' ? 'gradient-hero text-primary-foreground' : ''}>
             Rekap
           </Button>
+          <Button size="sm" variant={tab === 'pengaturan' ? 'default' : 'outline'} onClick={() => setTab('pengaturan')}
+            className={tab === 'pengaturan' ? 'gradient-hero text-primary-foreground' : ''}>
+            Pengaturan
+          </Button>
         </div>
 
         {tab === 'guru' && (
@@ -323,14 +336,16 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent className="space-y-2">
               {guruList.map(g => (
-                <div key={g.id} className="p-3 rounded-lg bg-muted/50 flex items-center justify-between">
-                  <div>
+                <div key={g.id} className="p-3 rounded-lg bg-muted/50 space-y-1">
+                  <div className="flex items-center justify-between">
                     <p className="font-medium text-sm">{g.nama}</p>
-                    <p className="text-xs text-muted-foreground">{g.email}</p>
+                    <Badge variant="outline" className="text-xs">
+                      {kelasList.filter(k => k.guru_id === g.id).length} kelas
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className="text-xs">
-                    {kelasList.filter(k => k.guru_id === g.id).length} kelas
-                  </Badge>
+                  <p className="text-xs text-muted-foreground">{g.email}</p>
+                  {g.username && <p className="text-xs">👤 Username: <span className="font-mono">{g.username}</span></p>}
+                  {g.password_plain && <p className="text-xs">🔑 Password: <span className="font-mono">{g.password_plain}</span></p>}
                 </div>
               ))}
               {guruList.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Belum ada guru.</p>}
@@ -512,6 +527,90 @@ const AdminDashboard = () => {
                 }}
               >
                 Tutup
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {tab === 'pengaturan' && (
+        <div className="space-y-4">
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg">Pengaturan Semester</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label className="text-xs">Semester Aktif</Label>
+                <select 
+                  value={semesterAktif} 
+                  onChange={(e) => setSemesterAktif(e.target.value)}
+                  className="w-full mt-1 p-2 border rounded-md"
+                >
+                  <option value="GANJIL">Ganjil</option>
+                  <option value="GENAP">Genap</option>
+                </select>
+              </div>
+              <Button onClick={async () => {
+                const { error } = await supabase.from('pengaturan' as any).upsert({
+                  key: 'semester_aktif',
+                  value: semesterAktif,
+                  deskripsi: 'Semester yang sedang berjalan (GANJIL/GENAP)'
+                });
+                if (error) toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+                else toast({ title: 'Berhasil', description: 'Semester aktif diperbarui' });
+              }}>
+                Simpan Semester
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-lg">Pengumuman</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <Input 
+                  placeholder="Judul pengumuman" 
+                  value={newPengumuman.judul}
+                  onChange={(e) => setNewPengumuman({...newPengumuman, judul: e.target.value})}
+                />
+                <textarea 
+                  placeholder="Isi pengumuman"
+                  className="w-full p-2 border rounded-md"
+                  rows={3}
+                  value={newPengumuman.isi}
+                  onChange={(e) => setNewPengumuman({...newPengumuman, isi: e.target.value})}
+                />
+                <select 
+                  value={newPengumuman.tipe}
+                  onChange={(e) => setNewPengumuman({...newPengumuman, tipe: e.target.value})}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="info">Info</option>
+                  <option value="warning">Warning</option>
+                  <option value="success">Success</option>
+                </select>
+              </div>
+              <Button onClick={async () => {
+                if (!newPengumuman.judul || !newPengumuman.isi) {
+                  toast({ title: 'Error', description: 'Judul dan isi harus diisi', variant: 'destructive' });
+                  return;
+                }
+                const { error } = await (supabase.from('pengumuman' as any).insert({
+                  judul: newPengumuman.judul,
+                  isi: newPengumuman.isi,
+                  tipe: newPengumuman.tipe,
+                  aktif: true
+                }));
+                if (error) toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+                else {
+                  toast({ title: 'Berhasil', description: 'Pengumuman ditambahkan' });
+                  setNewPengumuman({ judul: '', isi: '', tipe: 'info' });
+                }
+              }}>
+                Tambah Pengumuman
               </Button>
             </CardContent>
           </Card>
