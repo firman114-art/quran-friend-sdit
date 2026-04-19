@@ -73,7 +73,8 @@ const LoginPage = () => {
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
           <img src={logoSekolah} alt="Logo SDIT Al-Insan Pinrang" className="w-24 h-24 mx-auto mb-4 rounded-full object-cover shadow-lg" />
-          <h1 className="text-2xl font-bold text-foreground">Capaian Kelas Minat dan Bakat</h1>
+          <h1 className="text-2xl font-bold text-foreground">AISHA</h1>
+          <p className="text-sm text-muted-foreground italic">Al-Insan Student Hafidz Achievement</p>
           <p className="text-muted-foreground mt-1">SDIT Al-Insan Pinrang</p>
         </div>
 
