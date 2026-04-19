@@ -556,7 +556,7 @@ const AdminDashboard = () => {
                   key: 'semester_aktif',
                   value: semesterAktif,
                   deskripsi: 'Semester yang sedang berjalan (GANJIL/GENAP)'
-                });
+                }, { onConflict: 'key' });
                 if (error) toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
                 else toast({ title: 'Berhasil', description: 'Semester aktif diperbarui' });
               }}>

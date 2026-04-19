@@ -25,9 +25,12 @@ const Index = () => {
 
   useEffect(() => {
     // Fetch active announcements
-    supabase.from('pengumuman' as any).select('*').eq('aktif', true).order('created_at', { ascending: false }).limit(5).then(({ data }) => {
+    const fetchPengumuman = async () => {
+      const { data, error } = await supabase.from('pengumuman' as any).select('*').eq('aktif', true).order('created_at', { ascending: false }).limit(5);
       if (data) setPengumumanList(data);
-    });
+      if (error) console.error('Error fetching announcements:', error);
+    };
+    fetchPengumuman();
   }, []);
 
   useEffect(() => {
