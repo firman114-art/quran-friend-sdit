@@ -202,8 +202,8 @@ const MuridDetail = () => {
                       {r.hafalan_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.hafalan_predikat}</Badge>}
                     </p>
                   )}
-                  {r.tilawah_surah && (
-                    <p className="text-sm">📖 Tilawah: {r.tilawah_surah} Ayat {r.tilawah_ayat}
+                  {(r.tilawah_surah || r.tilawah_ayat) && (
+                    <p className="text-sm">📖 Tilawah: {r.tilawah_surah || '-'} Ayat {r.tilawah_ayat || '-'}
                       {r.tilawah_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.tilawah_predikat}</Badge>}
                     </p>
                   )}

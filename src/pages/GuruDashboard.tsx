@@ -450,9 +450,9 @@ const GuruDashboard = () => {
                                         ) : '-'}
                                       </TableCell>
                                       <TableCell className="border">
-                                        {record.tilawah_surah ? (
+                                        {(record.tilawah_surah || record.tilawah_ayat) ? (
                                           <span>
-                                            {record.tilawah_surah}
+                                            {record.tilawah_surah || '-'}
                                             {record.tilawah_ayat && ` ayat ${record.tilawah_ayat}`}
                                             {record.tilawah_predikat && ` (${record.tilawah_predikat})`}
                                           </span>

@@ -210,8 +210,8 @@ const MonthlyRecap = ({ students, records, kelasNama }: Props) => {
                     {s.lastHafalan.hafalan_predikat && <Badge className="ml-1 text-[10px] bg-primary/10 text-primary">{s.lastHafalan.hafalan_predikat}</Badge>}
                   </p>
                 )}
-                {s.lastTilawah && (
-                  <p>📖 Tilawah terakhir: {s.lastTilawah.tilawah_surah} Ay. {s.lastTilawah.tilawah_ayat}
+                {(s.lastTilawah?.tilawah_surah || s.lastTilawah?.tilawah_ayat) && (
+                  <p>📖 Tilawah terakhir: {s.lastTilawah.tilawah_surah || '-'} Ay. {s.lastTilawah.tilawah_ayat || '-'}
                     {s.lastTilawah.tilawah_predikat && <Badge className="ml-1 text-[10px] bg-primary/10 text-primary">{s.lastTilawah.tilawah_predikat}</Badge>}
                   </p>
                 )}
