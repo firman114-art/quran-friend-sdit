@@ -21,6 +21,14 @@ const Index = () => {
   const [results, setResults] = useState<SiswaResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [showJurnalMuridForm, setShowJurnalMuridForm] = useState(false);
+  const [pengumumanList, setPengumumanList] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Fetch active announcements
+    supabase.from('pengumuman' as any).select('*').eq('aktif', true).order('created_at', { ascending: false }).limit(5).then(({ data }) => {
+      if (data) setPengumumanList(data);
+    });
+  }, []);
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -69,6 +77,21 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-lg space-y-6">
+        {pengumumanList.length > 0 && (
+          <div className="space-y-3">
+            {pengumumanList.map((p) => (
+              <Card key={p.id} className={`border-l-4 ${
+                p.tipe === 'warning' ? 'border-l-warning' : 
+                p.tipe === 'success' ? 'border-l-success' : 'border-l-primary'
+              }`}>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-sm">{p.judul}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{p.isi}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
         <Card className="border-0 shadow-lg">
           <CardContent className="p-6 space-y-4">
             <div className="text-center">
