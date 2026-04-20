@@ -220,7 +220,7 @@ const MuridDetail = () => {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4 text-center">
                 <Star className="w-6 h-6 mx-auto text-accent mb-1" />
-                <p className="text-2xl font-bold">{records.filter(r => r.hafalan_predikat === 'A').length}</p>
+                <p className="text-2xl font-bold">{records.filter(r => r.hafalan_predikat === 'A' || r.hafalan_predikat === 'Mumtaz').length}</p>
                 <p className="text-xs text-muted-foreground">Mumtaz</p>
               </CardContent>
             </Card>
