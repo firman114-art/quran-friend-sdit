@@ -272,12 +272,12 @@ const MuridDetail = () => {
                     </p>
                   )}
                   {(r.tilawah_surah || r.tilawah_ayat) && (
-                    <p className="text-sm">📖 Tilawah: {r.tilawah_surah || '-'} Ayat {r.tilawah_ayat || '-'}
+                    <p className="text-sm font-semibold">📖 Tilawah: {r.tilawah_surah || '-'} Ayat {r.tilawah_ayat || '-'}
                       {r.tilawah_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.tilawah_predikat}</Badge>}
                     </p>
                   )}
                   {r.jilid_buku && (
-                    <p className="text-sm">📕 {r.jilid_buku} Hal. {r.jilid_halaman}
+                    <p className="text-sm font-semibold">📕 Jilid: {r.jilid_buku} Hal. {r.jilid_halaman}
                       {r.jilid_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.jilid_predikat}</Badge>}
                     </p>
                   )}
