@@ -317,9 +317,10 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
           </div>
 
           <Tabs defaultValue="hafalan" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="hafalan">🕌 Hafalan</TabsTrigger>
               <TabsTrigger value="tilawah">📖 Tilawah</TabsTrigger>
+              <TabsTrigger value="jilid">📕 Jilid</TabsTrigger>
             </TabsList>
             
             {/* HAFALAN TAB */}
