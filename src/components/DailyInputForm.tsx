@@ -253,6 +253,9 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
       jilid_buku: jilidBuku || null,
       jilid_halaman: jilidHalaman ? parseInt(jilidHalaman) : null,
       jilid_predikat: jilidPredikat || null,
+      jilid_kesalahan_tajwid: jilidKesalahanTajwid,
+      jilid_kesalahan_kelancaran: jilidKesalahanKelancaran,
+      jilid_kesalahan_fasohah: jilidKesalahanFasohah,
       catatan_guru: catatanGuru || null,
     };
     console.log('Insert data:', insertData);
