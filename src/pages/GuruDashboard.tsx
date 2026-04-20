@@ -52,6 +52,9 @@ interface RecordRow {
   jilid_halaman: number | null;
   jilid_penilaian: string | null;
   jilid_predikat: string | null;
+  jilid_kesalahan_tajwid: number | null;
+  jilid_kesalahan_kelancaran: number | null;
+  jilid_kesalahan_fasohah: number | null;
   catatan_guru: string | null;
 }
 
@@ -477,6 +480,13 @@ const GuruDashboard = () => {
                                           <span>
                                             {record.jilid_buku} Hal.{record.jilid_halaman}
                                             {record.jilid_predikat && ` (${record.jilid_predikat})`}
+                                            {(record.jilid_kesalahan_tajwid || record.jilid_kesalahan_kelancaran || record.jilid_kesalahan_fasohah) && (
+                                              <span className="text-xs text-muted-foreground block">
+                                                Tajwid: {record.jilid_kesalahan_tajwid || 0}, 
+                                                Kelancaran: {record.jilid_kesalahan_kelancaran || 0}, 
+                                                Fasohah: {record.jilid_kesalahan_fasohah || 0}
+                                              </span>
+                                            )}
                                           </span>
                                         ) : '-'}
                                       </TableCell>
