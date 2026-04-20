@@ -54,7 +54,6 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
   const [hafalanKesalahanKelancaran, setHafalanKesalahanKelancaran] = useState(0);
   const [hafalanKesalahanFasohah, setHafalanKesalahanFasohah] = useState(0);
   // Tilawah
-  const [tilawahTipe, setTilawahTipe] = useState<'quran' | 'jilid'>('quran');
   const [tilawahJuz, setTilawahJuz] = useState('');
   const [tilawahSurah, setTilawahSurah] = useState('');
   const [tilawahAyat, setTilawahAyat] = useState('');
@@ -62,12 +61,6 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
   const [tilawahKesalahanTajwid, setTilawahKesalahanTajwid] = useState(0);
   const [tilawahKesalahanKelancaran, setTilawahKesalahanKelancaran] = useState(0);
   const [tilawahKesalahanFasohah, setTilawahKesalahanFasohah] = useState(0);
-  // Jilid
-  const [jilidBuku, setJilidBuku] = useState('');
-  const [jilidHalaman, setJilidHalaman] = useState('');
-  const [jilidPredikat, setJilidPredikat] = useState('');
-  const [jilidKesalahanTajwid, setJilidKesalahanTajwid] = useState(0);
-  const [jilidKesalahanKelancaran, setJilidKesalahanKelancaran] = useState(0);
   // Catatan
   const [catatanGuru, setCatatanGuru] = useState('');
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
@@ -208,30 +201,24 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
     if (tilawahSurah) {
       parts.push(`Tilawah: ${tilawahSurah} Ay. ${tilawahAyat || '-'} (${tilawahPredikat || '-'}), Tajwid: ${tilawahKesalahanTajwid}, Kelancaran: ${tilawahKesalahanKelancaran}, Fasohah: ${tilawahKesalahanFasohah}`);
     }
-    if (jilidBuku) {
-      parts.push(`Jilid: ${jilidBuku} Hal. ${jilidHalaman || '-'} (${jilidPredikat || '-'}), Tajwid: ${jilidKesalahanTajwid}, Kelancaran: ${jilidKesalahanKelancaran}`);
-    }
     if (parts.length > 0) {
       setCatatanGuru(prev => {
         // Only auto-set if user hasn't manually typed
-        if (!prev || prev.startsWith('Hafalan:') || prev.startsWith('Tilawah:') || prev.startsWith('Jilid:')) {
+        if (!prev || prev.startsWith('Hafalan:') || prev.startsWith('Tilawah:')) {
           return parts.join('. ');
         }
         return prev;
       });
     }
-  }, [hafalanSurah, hafalanAyat, hafalanPredikat, hafalanKesalahanTajwid, hafalanKesalahanKelancaran, hafalanKesalahanFasohah, tilawahSurah, tilawahAyat, tilawahPredikat, tilawahKesalahanTajwid, tilawahKesalahanKelancaran, tilawahKesalahanFasohah, jilidBuku, jilidHalaman, jilidPredikat, jilidKesalahanTajwid, jilidKesalahanKelancaran]);
+  }, [hafalanSurah, hafalanAyat, hafalanPredikat, hafalanKesalahanTajwid, hafalanKesalahanKelancaran, hafalanKesalahanFasohah, tilawahSurah, tilawahAyat, tilawahPredikat, tilawahKesalahanTajwid, tilawahKesalahanKelancaran, tilawahKesalahanFasohah]);
 
   const handleSubmit = async () => {
     // At least one section must be filled
     const hasHafalan = hafalanSurah && hafalanAyat;
-    const hasTilawahQuran = tilawahTipe === 'quran' && tilawahSurah && tilawahAyat;
-    const hasTilawahJilid = tilawahTipe === 'jilid' && tilawahSurah && tilawahAyat;
-    const hasTilawah = hasTilawahQuran || hasTilawahJilid;
-    const hasJilid = jilidBuku && jilidHalaman;
+    const hasTilawah = tilawahSurah && tilawahAyat;
 
-    if (!hasHafalan && !hasTilawah && !hasJilid) {
-      toast({ title: 'Isi minimal satu bagian (Hafalan, Tilawah, atau Jilid)!', variant: 'destructive' });
+    if (!hasHafalan && !hasTilawah) {
+      toast({ title: 'Isi minimal satu bagian (Hafalan atau Tilawah)!', variant: 'destructive' });
       return;
     }
 
@@ -251,10 +238,6 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
       tilawah_surah: tilawahSurah || null,
       tilawah_ayat: tilawahAyat || null,
       tilawah_predikat: tilawahPredikat || null,
-      // jilid data
-      jilid_buku: jilidBuku || null,
-      jilid_halaman: jilidHalaman ? parseInt(jilidHalaman) : null,
-      jilid_predikat: jilidPredikat || null,
       catatan_guru: catatanGuru || null,
     };
     console.log('Insert data:', insertData);
@@ -276,7 +259,6 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
     const parts = [`📋 Laporan Harian - ${tanggal}`, `👤 ${student.name} (Kelas ${student.kelas})`];
     if (hafalanSurah) parts.push(`🕌 Hafalan: ${hafalanSurah} Ay. ${hafalanAyat} - ${hafalanPredikat}`);
     if (tilawahSurah) parts.push(`📖 Tilawah: ${tilawahSurah} Ay. ${tilawahAyat} - ${tilawahPredikat}`);
-    if (jilidBuku) parts.push(`📕 Jilid: ${jilidBuku} Hal. ${jilidHalaman} - ${jilidPredikat}`);
     if (catatanGuru) parts.push(`📝 ${catatanGuru}`);
     const phone = student.noHpOrtu.replace(/[^0-9]/g, '');
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(parts.join('\n'))}`, '_blank');
@@ -396,72 +378,41 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
             <TabsContent value="tilawah" className="space-y-3 pt-3">
               <div className="p-3 rounded-lg bg-secondary space-y-3">
                 <div>
-                  <Label className="text-xs">Tipe Tilawah</Label>
-                  <Select value={tilawahTipe} onValueChange={(v: 'quran' | 'jilid') => setTilawahTipe(v)}>
-                    <SelectTrigger><SelectValue placeholder="Pilih tipe..." /></SelectTrigger>
+                  <Label className="text-xs">Juz</Label>
+                  <Select value={tilawahJuz} onValueChange={v => { setTilawahJuz(v); setTilawahSurah(''); }}>
+                    <SelectTrigger><SelectValue placeholder="Pilih Juz..." /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="quran"><BookOpen className="w-4 h-4 mr-2" /> Al-Quran</SelectItem>
-                      <SelectItem value="jilid"><Book className="w-4 h-4 mr-2" /> Buku Jilid</SelectItem>
+                      {JUZ_DATA.map(j => <SelectItem key={j.nomor} value={String(j.nomor)}>Juz {j.nomor}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-
-                {tilawahTipe === 'quran' ? (
-                  <>
-                    <div>
-                      <Label className="text-xs">Juz</Label>
-                      <Select value={tilawahJuz} onValueChange={v => { setTilawahJuz(v); setTilawahSurah(''); }}>
-                        <SelectTrigger><SelectValue placeholder="Pilih Juz..." /></SelectTrigger>
-                        <SelectContent>
-                          {JUZ_DATA.map(j => <SelectItem key={j.nomor} value={String(j.nomor)}>Juz {j.nomor}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Surah</Label>
-                      <Select value={tilawahSurah} onValueChange={setTilawahSurah} disabled={!tilawahJuz}>
-                        <SelectTrigger><SelectValue placeholder={tilawahJuz ? 'Pilih Surah...' : 'Pilih Juz dulu'} /></SelectTrigger>
-                        <SelectContent>
-                          {tilawahSurahList.map(s => <SelectItem key={s.nama} value={s.nama}>{s.nama}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Ayat (angka saja)</Label>
-                      <Input placeholder="Contoh: 1-10" value={tilawahAyat} onChange={e => setTilawahAyat(e.target.value.replace(/[^0-9\-,]/g, ''))} disabled={!tilawahSurah} />
-                    </div>
-                    {tilawahSurah && tilawahAyat && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => {
-                          const surahNumber = getSurahNumber(tilawahSurah);
-                          if (surahNumber) {
-                            window.open(`https://quran.com/${surahNumber}:${tilawahAyat}`, '_blank');
-                          }
-                        }}
-                        className="w-full text-xs"
-                      >
-                        📖 Lihat Ayat di Quran.com
-                      </Button>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <div>
-                      <Label className="text-xs">Buku Jilid</Label>
-                      <Select value={tilawahSurah} onValueChange={setTilawahSurah}>
-                        <SelectTrigger><SelectValue placeholder="Pilih jilid..." /></SelectTrigger>
-                        <SelectContent>
-                          {JILID_OPTIONS.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Halaman (angka saja)</Label>
-                      <Input placeholder="1" value={tilawahAyat} onChange={e => setTilawahAyat(e.target.value.replace(/[^0-9]/g, ''))} />
-                    </div>
-                  </>
+                <div>
+                  <Label className="text-xs">Surah</Label>
+                  <Select value={tilawahSurah} onValueChange={setTilawahSurah} disabled={!tilawahJuz}>
+                    <SelectTrigger><SelectValue placeholder={tilawahJuz ? 'Pilih Surah...' : 'Pilih Juz dulu'} /></SelectTrigger>
+                    <SelectContent>
+                      {tilawahSurahList.map(s => <SelectItem key={s.nama} value={s.nama}>{s.nama}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Ayat (angka saja)</Label>
+                  <Input placeholder="Contoh: 1-10" value={tilawahAyat} onChange={e => setTilawahAyat(e.target.value.replace(/[^0-9\-,]/g, ''))} disabled={!tilawahSurah} />
+                </div>
+                {tilawahSurah && tilawahAyat && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      const surahNumber = getSurahNumber(tilawahSurah);
+                      if (surahNumber) {
+                        window.open(`https://quran.com/${surahNumber}:${tilawahAyat}`, '_blank');
+                      }
+                    }}
+                    className="w-full text-xs"
+                  >
+                    📖 Lihat Ayat di Quran.com
+                  </Button>
                 )}
 
                 <div>
