@@ -67,6 +67,7 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
   const [jilidPredikat, setJilidPredikat] = useState('');
   const [jilidKesalahanTajwid, setJilidKesalahanTajwid] = useState(0);
   const [jilidKesalahanKelancaran, setJilidKesalahanKelancaran] = useState(0);
+  const [jilidKesalahanFasohah, setJilidKesalahanFasohah] = useState(0);
   // Catatan
   const [catatanGuru, setCatatanGuru] = useState('');
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
@@ -208,7 +209,7 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
       parts.push(`Tilawah: ${tilawahSurah} Ay. ${tilawahAyat || '-'} (${tilawahPredikat || '-'}), Tajwid: ${tilawahKesalahanTajwid}, Kelancaran: ${tilawahKesalahanKelancaran}, Fasohah: ${tilawahKesalahanFasohah}`);
     }
     if (jilidBuku) {
-      parts.push(`Jilid: ${jilidBuku} Hal. ${jilidHalaman || '-'} (${jilidPredikat || '-'}), Tajwid: ${jilidKesalahanTajwid}, Kelancaran: ${jilidKesalahanKelancaran}`);
+      parts.push(`Jilid: ${jilidBuku} Hal. ${jilidHalaman || '-'} (${jilidPredikat || '-'}), Tajwid: ${jilidKesalahanTajwid}, Kelancaran: ${jilidKesalahanKelancaran}, Fasohah: ${jilidKesalahanFasohah}`);
     }
     if (parts.length > 0) {
       setCatatanGuru(prev => {
@@ -219,7 +220,7 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
         return prev;
       });
     }
-  }, [hafalanSurah, hafalanAyat, hafalanPredikat, hafalanKesalahanTajwid, hafalanKesalahanKelancaran, hafalanKesalahanFasohah, tilawahSurah, tilawahAyat, tilawahPredikat, tilawahKesalahanTajwid, tilawahKesalahanKelancaran, tilawahKesalahanFasohah, jilidBuku, jilidHalaman, jilidPredikat, jilidKesalahanTajwid, jilidKesalahanKelancaran]);
+  }, [hafalanSurah, hafalanAyat, hafalanPredikat, hafalanKesalahanTajwid, hafalanKesalahanKelancaran, hafalanKesalahanFasohah, tilawahSurah, tilawahAyat, tilawahPredikat, tilawahKesalahanTajwid, tilawahKesalahanKelancaran, tilawahKesalahanFasohah, jilidBuku, jilidHalaman, jilidPredikat, jilidKesalahanTajwid, jilidKesalahanKelancaran, jilidKesalahanFasohah]);
 
   const handleSubmit = async () => {
     // At least one section must be filled
@@ -479,6 +480,7 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
                   <p className="text-xs font-medium text-muted-foreground">Perhitungan Kesalahan</p>
                   <ErrorCounter label="Tajwid" value={jilidKesalahanTajwid} onChange={setJilidKesalahanTajwid} />
                   <ErrorCounter label="Kelancaran" value={jilidKesalahanKelancaran} onChange={setJilidKesalahanKelancaran} />
+                  <ErrorCounter label="Fasohah" value={jilidKesalahanFasohah} onChange={setJilidKesalahanFasohah} />
                 </div>
               </div>
             </TabsContent>
