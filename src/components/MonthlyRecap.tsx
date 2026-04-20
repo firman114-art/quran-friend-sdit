@@ -71,7 +71,7 @@ const MonthlyRecap = ({ students, records, kelasNama }: Props) => {
     const kehadiran = new Set(sRecords.map(r => r.tanggal)).size;
     const persentase = totalPertemuan > 0 ? Math.round((kehadiran / totalPertemuan) * 100) : 0;
     const lastHafalan = sRecords.find(r => r.hafalan_surah);
-    const lastTilawah = sRecords.find(r => r.tilawah_surah);
+    const lastTilawah = sRecords.find(r => r.tilawah_surah || r.tilawah_ayat);
     const lastJilid = sRecords.find(r => r.jilid_buku);
     return { ...s, kehadiran, persentase, lastHafalan, lastTilawah, lastJilid, totalRecords: sRecords.length };
   });
