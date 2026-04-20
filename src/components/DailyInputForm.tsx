@@ -61,6 +61,12 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
   const [tilawahKesalahanTajwid, setTilawahKesalahanTajwid] = useState(0);
   const [tilawahKesalahanKelancaran, setTilawahKesalahanKelancaran] = useState(0);
   const [tilawahKesalahanFasohah, setTilawahKesalahanFasohah] = useState(0);
+  // Jilid
+  const [jilidBuku, setJilidBuku] = useState('');
+  const [jilidHalaman, setJilidHalaman] = useState('');
+  const [jilidPredikat, setJilidPredikat] = useState('');
+  const [jilidKesalahanTajwid, setJilidKesalahanTajwid] = useState(0);
+  const [jilidKesalahanKelancaran, setJilidKesalahanKelancaran] = useState(0);
   // Catatan
   const [catatanGuru, setCatatanGuru] = useState('');
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
@@ -201,24 +207,28 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
     if (tilawahSurah) {
       parts.push(`Tilawah: ${tilawahSurah} Ay. ${tilawahAyat || '-'} (${tilawahPredikat || '-'}), Tajwid: ${tilawahKesalahanTajwid}, Kelancaran: ${tilawahKesalahanKelancaran}, Fasohah: ${tilawahKesalahanFasohah}`);
     }
+    if (jilidBuku) {
+      parts.push(`Jilid: ${jilidBuku} Hal. ${jilidHalaman || '-'} (${jilidPredikat || '-'}), Tajwid: ${jilidKesalahanTajwid}, Kelancaran: ${jilidKesalahanKelancaran}`);
+    }
     if (parts.length > 0) {
       setCatatanGuru(prev => {
         // Only auto-set if user hasn't manually typed
-        if (!prev || prev.startsWith('Hafalan:') || prev.startsWith('Tilawah:')) {
+        if (!prev || prev.startsWith('Hafalan:') || prev.startsWith('Tilawah:') || prev.startsWith('Jilid:')) {
           return parts.join('. ');
         }
         return prev;
       });
     }
-  }, [hafalanSurah, hafalanAyat, hafalanPredikat, hafalanKesalahanTajwid, hafalanKesalahanKelancaran, hafalanKesalahanFasohah, tilawahSurah, tilawahAyat, tilawahPredikat, tilawahKesalahanTajwid, tilawahKesalahanKelancaran, tilawahKesalahanFasohah]);
+  }, [hafalanSurah, hafalanAyat, hafalanPredikat, hafalanKesalahanTajwid, hafalanKesalahanKelancaran, hafalanKesalahanFasohah, tilawahSurah, tilawahAyat, tilawahPredikat, tilawahKesalahanTajwid, tilawahKesalahanKelancaran, tilawahKesalahanFasohah, jilidBuku, jilidHalaman, jilidPredikat, jilidKesalahanTajwid, jilidKesalahanKelancaran]);
 
   const handleSubmit = async () => {
     // At least one section must be filled
     const hasHafalan = hafalanSurah && hafalanAyat;
     const hasTilawah = tilawahSurah && tilawahAyat;
+    const hasJilid = jilidBuku && jilidHalaman;
 
-    if (!hasHafalan && !hasTilawah) {
-      toast({ title: 'Isi minimal satu bagian (Hafalan atau Tilawah)!', variant: 'destructive' });
+    if (!hasHafalan && !hasTilawah && !hasJilid) {
+      toast({ title: 'Isi minimal satu bagian (Hafalan, Tilawah, atau Jilid)!', variant: 'destructive' });
       return;
     }
 
@@ -238,6 +248,10 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
       tilawah_surah: tilawahSurah || null,
       tilawah_ayat: tilawahAyat || null,
       tilawah_predikat: tilawahPredikat || null,
+      // jilid data
+      jilid_buku: jilidBuku || null,
+      jilid_halaman: jilidHalaman ? parseInt(jilidHalaman) : null,
+      jilid_predikat: jilidPredikat || null,
       catatan_guru: catatanGuru || null,
     };
     console.log('Insert data:', insertData);
@@ -259,6 +273,7 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
     const parts = [`📋 Laporan Harian - ${tanggal}`, `👤 ${student.name} (Kelas ${student.kelas})`];
     if (hafalanSurah) parts.push(`🕌 Hafalan: ${hafalanSurah} Ay. ${hafalanAyat} - ${hafalanPredikat}`);
     if (tilawahSurah) parts.push(`📖 Tilawah: ${tilawahSurah} Ay. ${tilawahAyat} - ${tilawahPredikat}`);
+    if (jilidBuku) parts.push(`📕 Jilid: ${jilidBuku} Hal. ${jilidHalaman} - ${jilidPredikat}`);
     if (catatanGuru) parts.push(`📝 ${catatanGuru}`);
     const phone = student.noHpOrtu.replace(/[^0-9]/g, '');
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(parts.join('\n'))}`, '_blank');
@@ -429,6 +444,40 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
                   <ErrorCounter label="Tajwid" value={tilawahKesalahanTajwid} onChange={setTilawahKesalahanTajwid} />
                   <ErrorCounter label="Kelancaran" value={tilawahKesalahanKelancaran} onChange={setTilawahKesalahanKelancaran} />
                   <ErrorCounter label="Fasohah" value={tilawahKesalahanFasohah} onChange={setTilawahKesalahanFasohah} />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* JILID TAB */}
+            <TabsContent value="jilid" className="space-y-3 pt-3">
+              <div className="p-3 rounded-lg bg-secondary space-y-3">
+                <div>
+                  <Label className="text-xs">Buku Jilid</Label>
+                  <Select value={jilidBuku} onValueChange={setJilidBuku}>
+                    <SelectTrigger><SelectValue placeholder="Pilih jilid..." /></SelectTrigger>
+                    <SelectContent>
+                      {JILID_OPTIONS.map(j => <SelectItem key={j} value={j}>{j}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Halaman (angka saja)</Label>
+                  <Input placeholder="1" value={jilidHalaman} onChange={e => setJilidHalaman(e.target.value.replace(/[^0-9]/g, ''))} />
+                </div>
+
+                <div>
+                  <Label className="text-xs">Penilaian</Label>
+                  <Select value={jilidPredikat} onValueChange={setJilidPredikat}>
+                    <SelectTrigger><SelectValue placeholder="Pilih penilaian..." /></SelectTrigger>
+                    <SelectContent>
+                      {PREDIKAT_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 pt-2">
+                  <p className="text-xs font-medium text-muted-foreground">Perhitungan Kesalahan</p>
+                  <ErrorCounter label="Tajwid" value={jilidKesalahanTajwid} onChange={setJilidKesalahanTajwid} />
+                  <ErrorCounter label="Kelancaran" value={jilidKesalahanKelancaran} onChange={setJilidKesalahanKelancaran} />
                 </div>
               </div>
             </TabsContent>

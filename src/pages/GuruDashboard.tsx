@@ -431,7 +431,6 @@ const GuruDashboard = () => {
                                   <TableHead className="border text-xs">Nama Murid</TableHead>
                                   <TableHead className="border text-xs">Hafalan</TableHead>
                                   <TableHead className="border text-xs">Tilawah</TableHead>
-                                  <TableHead className="border text-xs">Jilid</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -459,14 +458,6 @@ const GuruDashboard = () => {
                                             {record.tilawah_surah || '-'}
                                             {record.tilawah_ayat && ` ayat ${record.tilawah_ayat}`}
                                             {record.tilawah_predikat && ` (${record.tilawah_predikat})`}
-                                          </span>
-                                        ) : '-'}
-                                      </TableCell>
-                                      <TableCell className="border">
-                                        {record.jilid_buku ? (
-                                          <span>
-                                            {record.jilid_buku} Hal.{record.jilid_halaman}
-                                            {record.jilid_predikat && ` (${record.jilid_predikat})`}
                                           </span>
                                         ) : '-'}
                                       </TableCell>
