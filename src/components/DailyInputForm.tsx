@@ -247,17 +247,14 @@ const DailyInputForm = ({ student, guruId, onClose }: Props) => {
       hafalan_jenis_setoran: hafalanJenisSetoran || null,
       hafalan_kesalahan_tajwid: hafalanKesalahanTajwid,
       hafalan_kesalahan_kelancaran: hafalanKesalahanKelancaran,
-      // tilawah data menggunakan kolom yang tersedia di tabel
-      tilawah_surah: tilawahTipe === 'quran' ? tilawahSurah : null,
-      tilawah_ayat: tilawahTipe === 'quran' ? tilawahAyat : null,
-      tilawah_predikat: tilawahTipe === 'quran' ? tilawahPredikat : null,
-      tilawah_kesalahan_tajwid: tilawahTipe === 'quran' ? tilawahKesalahanTajwid : null,
-      tilawah_kesalahan_kelancaran: tilawahTipe === 'quran' ? tilawahKesalahanKelancaran : null,
-      // jilid data menggunakan kolom tilpi
-      tilpi_kategori: tilawahTipe === 'jilid' ? tilawahSurah : jilidBuku || null,
-      tilpi_halaman: tilawahTipe === 'jilid' 
-        ? (tilawahAyat ? parseInt(tilawahAyat) : null) 
-        : (jilidHalaman ? parseInt(jilidHalaman) : null),
+      // tilawah data
+      tilawah_surah: tilawahSurah || null,
+      tilawah_ayat: tilawahAyat || null,
+      tilawah_predikat: tilawahPredikat || null,
+      // jilid data
+      jilid_buku: jilidBuku || null,
+      jilid_halaman: jilidHalaman ? parseInt(jilidHalaman) : null,
+      jilid_predikat: jilidPredikat || null,
       catatan_guru: catatanGuru || null,
     };
     console.log('Insert data:', insertData);
