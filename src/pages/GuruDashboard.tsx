@@ -543,7 +543,16 @@ const GuruDashboard = () => {
                                     </TableCell>
                                     <TableCell className="border">
                                       {jurnal.jilid_buku ? (
-                                        <span>{jurnal.jilid_buku} Hal.{jurnal.jilid_halaman}</span>
+                                        <span>
+                                          {jurnal.jilid_buku} Hal.{jurnal.jilid_halaman}
+                                          {(jurnal.jilid_kesalahan_tajwid || jurnal.jilid_kesalahan_kelancaran || jurnal.jilid_kesalahan_fasohah) && (
+                                            <span className="text-xs text-muted-foreground block">
+                                              Tajwid: {jurnal.jilid_kesalahan_tajwid || 0}, 
+                                              Kelancaran: {jurnal.jilid_kesalahan_kelancaran || 0}, 
+                                              Fasohah: {jurnal.jilid_kesalahan_fasohah || 0}
+                                            </span>
+                                          )}
+                                        </span>
                                       ) : '-'}
                                     </TableCell>
                                     <TableCell className="border max-w-[150px] truncate">
