@@ -143,17 +143,21 @@ const GuruDashboard = () => {
         toast({ title: 'Error fetch records', description: recordsRes.error.message, variant: 'destructive' });
       }
       
-      // Fetch jurnal rumah for these students
-      const jurnalRumahRes = await supabase
-        .from('jurnal_rumah')
-        .select('*')
-        .in('siswa_id', studentIds)
-        .order('tanggal', { ascending: false });
-      console.log('Jurnal Rumah for class:', jurnalRumahRes.data?.length, jurnalRumahRes.error);
-      
-      if (jurnalRumahRes.data) setJurnalRumah(jurnalRumahRes.data as any);
-      else if (jurnalRumahRes.error) {
-        console.error('Jurnal Rumah error:', jurnalRumahRes.error);
+      // Fetch jurnal rumah for these students (optional)
+      try {
+        const jurnalRumahRes = await (supabase
+          .from('jurnal_rumah' as any)
+          .select('*')
+          .in('siswa_id', studentIds)
+          .order('tanggal', { ascending: false }));
+        console.log('Jurnal Rumah for class:', jurnalRumahRes.data?.length, jurnalRumahRes.error);
+        
+        if (jurnalRumahRes.data) setJurnalRumah(jurnalRumahRes.data as any);
+        else if (jurnalRumahRes.error) {
+          console.error('Jurnal Rumah error:', jurnalRumahRes.error);
+        }
+      } catch (e) {
+        console.error('Jurnal Rumah fetch error:', e);
       }
     }
     
