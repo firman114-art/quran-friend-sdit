@@ -73,6 +73,13 @@ interface ClassStudent {
   totalRecords: number;
 }
 
+interface JurnalKelas {
+  id: string;
+  kelas_id: string;
+  tanggal: string;
+  tugas_rumah: string | null;
+}
+
 const MuridDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -80,6 +87,7 @@ const MuridDetail = () => {
   const [records, setRecords] = useState<RecordRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [classStudents, setClassStudents] = useState<ClassStudent[]>([]);
+  const [jurnalKelas, setJurnalKelas] = useState<JurnalKelas[]>([]);
   const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -90,6 +98,10 @@ const MuridDetail = () => {
       
       if (siswaData) {
         setSiswa(siswaData);
+        // Fetch jurnal_kelas for this class to get tugas_rumah
+        const { data: jurnalData } = await supabase.from('jurnal_kelas' as any).select('id, kelas_id, tanggal, tugas_rumah').eq('kelas_id', siswaData.kelas);
+        if (jurnalData) setJurnalKelas(jurnalData as any);
+        
         // Fetch other students from same class for ranking
         const { data: classStudentsData } = await supabase.from('siswa').select('id, nama').eq('kelas', siswaData.kelas);
         if (classStudentsData && classStudentsData.length > 0) {
@@ -239,27 +251,33 @@ const MuridDetail = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               {lastTwo.length === 0 && <p className="text-sm text-muted-foreground">Belum ada catatan.</p>}
-              {lastTwo.map(r => (
-                <div key={r.id} className="p-3 rounded-lg bg-secondary/50 space-y-1">
-                  <p className="text-xs font-medium text-primary">{r.tanggal}</p>
-                  {r.hafalan_surah && (
-                    <p className="text-sm">🕌 Hafalan: {r.hafalan_surah}
-                      {r.hafalan_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.hafalan_predikat}</Badge>}
-                    </p>
-                  )}
-                  {(r.tilawah_surah || r.tilawah_ayat) && (
-                    <p className="text-sm font-semibold">📖 Tilawah: {r.tilawah_surah || '-'} Ayat {r.tilawah_ayat || '-'}
-                      {r.tilawah_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.tilawah_predikat}</Badge>}
-                    </p>
-                  )}
-                  {r.jilid_buku && (
-                    <p className="text-sm font-semibold">📕 Jilid: {r.jilid_buku} Hal. {r.jilid_halaman}
-                      {r.jilid_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.jilid_predikat}</Badge>}
-                    </p>
-                  )}
-                  {r.catatan_guru && <p className="text-xs text-muted-foreground italic">📝 {r.catatan_guru}</p>}
-                </div>
-              ))}
+              {lastTwo.map(r => {
+                const jurnalHariIni = jurnalKelas.find(j => j.tanggal === r.tanggal);
+                return (
+                  <div key={r.id} className="p-3 rounded-lg bg-secondary/50 space-y-1">
+                    <p className="text-xs font-medium text-primary">{r.tanggal}</p>
+                    {r.hafalan_surah && (
+                      <p className="text-sm">🕌 Hafalan: {r.hafalan_surah} Ayat {r.hafalan_ayat}
+                        {r.hafalan_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.hafalan_predikat}</Badge>}
+                      </p>
+                    )}
+                    {(r.tilawah_surah || r.tilawah_ayat) && (
+                      <p className="text-sm font-semibold">📖 Tilawah: {r.tilawah_surah || '-'} Ayat {r.tilawah_ayat || '-'}
+                        {r.tilawah_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.tilawah_predikat}</Badge>}
+                      </p>
+                    )}
+                    {r.jilid_buku && (
+                      <p className="text-sm font-semibold">📕 Jilid: {r.jilid_buku} Hal. {r.jilid_halaman}
+                        {r.jilid_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.jilid_predikat}</Badge>}
+                      </p>
+                    )}
+                    {jurnalHariIni?.tugas_rumah && (
+                      <p className="text-xs text-amber-600 font-medium">📋 Tugas Rumah: {jurnalHariIni.tugas_rumah}</p>
+                    )}
+                    {r.catatan_guru && <p className="text-xs text-muted-foreground italic">📝 {r.catatan_guru}</p>}
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
 
