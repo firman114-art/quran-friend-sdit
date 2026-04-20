@@ -45,6 +45,9 @@ interface RecordRow {
   tilawah_ayat: string | null;
   tilawah_penilaian: string | null;
   tilawah_predikat: string | null;
+  tilawah_kesalahan_tajwid: number | null;
+  tilawah_kesalahan_kelancaran: number | null;
+  tilawah_kesalahan_fasohah: number | null;
   jilid_buku: string | null;
   jilid_halaman: number | null;
   jilid_penilaian: string | null;
@@ -459,6 +462,13 @@ const GuruDashboard = () => {
                                             {record.tilawah_surah || '-'}
                                             {record.tilawah_ayat && ` ayat ${record.tilawah_ayat}`}
                                             {record.tilawah_predikat && ` (${record.tilawah_predikat})`}
+                                            {(record.tilawah_kesalahan_tajwid || record.tilawah_kesalahan_kelancaran || record.tilawah_kesalahan_fasohah) && (
+                                              <span className="text-xs text-muted-foreground block">
+                                                Tajwid: {record.tilawah_kesalahan_tajwid || 0}, 
+                                                Kelancaran: {record.tilawah_kesalahan_kelancaran || 0}, 
+                                                Fasohah: {record.tilawah_kesalahan_fasohah || 0}
+                                              </span>
+                                            )}
                                           </span>
                                         ) : '-'}
                                       </TableCell>
