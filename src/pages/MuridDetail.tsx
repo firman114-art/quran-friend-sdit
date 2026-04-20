@@ -66,24 +66,55 @@ function buildWhatsAppMessage(siswa: SiswaInfo, records: RecordRow[]): string {
   return lines.join('\n');
 }
 
+interface ClassStudent {
+  id: string;
+  nama: string;
+  mumtazCount: number;
+  totalRecords: number;
+}
+
 const MuridDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [siswa, setSiswa] = useState<SiswaInfo | null>(null);
   const [records, setRecords] = useState<RecordRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [classStudents, setClassStudents] = useState<ClassStudent[]>([]);
   const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([
-      supabase.from('siswa').select('id, nama, kelas').eq('id', id).maybeSingle(),
-      supabase.from('daily_records').select('*').eq('siswa_id', id).order('tanggal', { ascending: false }),
-    ]).then(([siswaRes, recordsRes]) => {
-      if (siswaRes.data) setSiswa(siswaRes.data);
-      if (recordsRes.data) setRecords(recordsRes.data);
+    const fetchData = async () => {
+      const { data: siswaData } = await supabase.from('siswa').select('id, nama, kelas').eq('id', id).maybeSingle();
+      const { data: recordsData } = await supabase.from('daily_records').select('*').eq('siswa_id', id).order('tanggal', { ascending: false });
+      
+      if (siswaData) {
+        setSiswa(siswaData);
+        // Fetch other students from same class for ranking
+        const { data: classStudentsData } = await supabase.from('siswa').select('id, nama').eq('kelas', siswaData.kelas);
+        if (classStudentsData && classStudentsData.length > 0) {
+          const studentIds = classStudentsData.map(s => s.id);
+          const { data: allRecords } = await supabase.from('daily_records').select('*').in('siswa_id', studentIds);
+          
+          // Calculate performance for each student
+          const studentsWithStats = classStudentsData.map(s => {
+            const studentRecords = allRecords?.filter(r => r.siswa_id === s.id) || [];
+            const mumtazCount = studentRecords.filter(r => r.hafalan_predikat === 'A' || r.hafalan_predikat === 'Mumtaz').length;
+            return {
+              id: s.id,
+              nama: s.nama,
+              mumtazCount,
+              totalRecords: studentRecords.length
+            };
+          }).sort((a, b) => b.mumtazCount - a.mumtazCount).slice(0, 5); // Top 5
+          
+          setClassStudents(studentsWithStats);
+        }
+      }
+      if (recordsData) setRecords(recordsData);
       setLoading(false);
-    });
+    };
+    fetchData();
   }, [id]);
 
   // Fitur WhatsApp dinonaktifkan sementara - no_hp_ortu belum ada di database
@@ -189,7 +220,7 @@ const MuridDetail = () => {
                 <CardTitle className="text-base">Grafik Kehadiran (6 Bulan Terakhir)</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={120}>
                   <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
@@ -198,6 +229,30 @@ const MuridDetail = () => {
                     <Bar dataKey="kehadiran" fill="hsl(var(--primary))" />
                   </BarChart>
                 </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {classStudents.length > 0 && (
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">🏆 Siswa Terbaik di Kelas {siswa?.kelas}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {classStudents.map((s, index) => (
+                  <div key={s.id} className={`flex items-center justify-between p-2 rounded-lg ${s.id === id ? 'bg-primary/10' : 'bg-secondary/50'}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm font-medium">{s.nama} {s.id === id && '(Anda)'}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-primary">{s.mumtazCount} Mumtaz</span>
+                      <span className="text-xs text-muted-foreground block">{s.totalRecords} pertemuan</span>
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}
