@@ -106,7 +106,7 @@ const MuridDetail = () => {
               mumtazCount,
               totalRecords: studentRecords.length
             };
-          }).sort((a, b) => b.mumtazCount - a.mumtazCount).slice(0, 5); // Top 5
+          }).sort((a, b) => b.mumtazCount - a.mumtazCount).slice(0, 3); // Top 3
           
           setClassStudents(studentsWithStats);
         }
