@@ -233,30 +233,6 @@ const MuridDetail = () => {
             </Card>
           )}
 
-          {classStudents.length > 0 && (
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">🏆 Siswa Terbaik di Kelas {siswa?.kelas}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {classStudents.map((s, index) => (
-                  <div key={s.id} className={`flex items-center justify-between p-2 rounded-lg ${s.id === id ? 'bg-primary/10' : 'bg-secondary/50'}`}>
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                        {index + 1}
-                      </span>
-                      <span className="text-sm font-medium">{s.nama} {s.id === id && '(Anda)'}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-bold text-primary">{s.mumtazCount} Mumtaz</span>
-                      <span className="text-xs text-muted-foreground block">{s.totalRecords} pertemuan</span>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-base">2 Catatan Terakhir</CardTitle>
@@ -286,6 +262,30 @@ const MuridDetail = () => {
               ))}
             </CardContent>
           </Card>
+
+          {classStudents.length > 0 && (
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">🏆 Siswa Terbaik di Kelas {siswa?.kelas}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {classStudents.map((s, index) => (
+                  <div key={s.id} className={`flex items-center justify-between p-2 rounded-lg ${s.id === id ? 'bg-primary/10' : 'bg-secondary/50'}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm font-medium">{s.nama} {s.id === id && '(Anda)'}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-primary">{s.mumtazCount} Mumtaz</span>
+                      <span className="text-xs text-muted-foreground block">{s.totalRecords} pertemuan</span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="flex gap-2">
