@@ -40,7 +40,7 @@ const BulletinBoard = ({ isAdmin = false, isGuru = false }: Props) => {
     const { data } = await supabase
       .from('pengumuman' as any)
       .select('*')
-      .order('tanggal', { ascending: false });
+      .order('created_at', { ascending: false });
     if (data) setPengumumanList(data as any);
   };
 
@@ -56,8 +56,7 @@ const BulletinBoard = ({ isAdmin = false, isGuru = false }: Props) => {
       .insert({
         judul: judul.trim(),
         isi: isi.trim(),
-        tanggal: new Date().toISOString().split('T')[0],
-        prioritas,
+        aktif: true,
       } as any);
 
     setSaving(false);
