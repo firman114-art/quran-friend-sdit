@@ -5,14 +5,33 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import logoSekolah from '@/assets/logo-sekolah.jpg';
-import { Search, BookOpen, LogIn, Edit } from 'lucide-react';
+import { Search, BookOpen, LogIn, Edit, Home, Calendar } from 'lucide-react';
 import JurnalMuridForm from '@/components/JurnalMuridForm';
 import BulletinBoard from '@/components/BulletinBoard';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface SiswaResult {
   id: string;
   nama: string;
   kelas: string;
+}
+
+interface JurnalRumahRow {
+  id: string;
+  siswa_id: string;
+  tanggal: string;
+  hafalan_surah: string | null;
+  hafalan_ayat: string | null;
+  tilawah_surah: string | null;
+  tilawah_ayat: string | null;
+  jilid_buku: string | null;
+  jilid_halaman: number | null;
+  catatan: string | null;
+  created_at: string;
+  siswa?: {
+    nama: string;
+    kelas: string;
+  };
 }
 
 const Index = () => {
@@ -22,6 +41,8 @@ const Index = () => {
   const [searching, setSearching] = useState(false);
   const [showJurnalMuridForm, setShowJurnalMuridForm] = useState(false);
   const [pengumumanList, setPengumumanList] = useState<any[]>([]);
+  const [jurnalRumahList, setJurnalRumahList] = useState<JurnalRumahRow[]>([]);
+  const [loadingJurnal, setLoadingJurnal] = useState(false);
 
   useEffect(() => {
     // Fetch active announcements
@@ -35,6 +56,37 @@ const Index = () => {
       }
     };
     fetchPengumuman();
+  }, []);
+
+  // Fetch recent jurnal rumah entries
+  useEffect(() => {
+    const fetchJurnalRumah = async () => {
+      setLoadingJurnal(true);
+      try {
+        const { data, error } = await supabase
+          .from('jurnal_rumah' as any)
+          .select(`
+            *,
+            siswa:siswa_id (nama, kelas)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(10);
+        
+        if (data) {
+          const formattedData = data.map((item: any) => ({
+            ...item,
+            siswa: item.siswa || null
+          }));
+          setJurnalRumahList(formattedData);
+        }
+        if (error) console.error('Error fetching jurnal rumah:', error);
+      } catch (e) {
+        console.error('Jurnal rumah fetch error:', e);
+      } finally {
+        setLoadingJurnal(false);
+      }
+    };
+    fetchJurnalRumah();
   }, []);
 
   useEffect(() => {
@@ -146,6 +198,62 @@ const Index = () => {
             <Edit className="w-4 h-4 mr-2" /> Isi Jurnal Rumah
           </Button>
         </div>
+
+        {/* Tabel Rekap Jurnal Rumah */}
+        {jurnalRumahList.length > 0 && (
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-4">
+              <h2 className="font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
+                <Home className="w-5 h-5 text-success" />
+                Rekap Jurnal Rumah
+              </h2>
+              <div className="overflow-x-auto">
+                <Table className="border">
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="border text-xs">Tanggal</TableHead>
+                      <TableHead className="border text-xs">Nama Murid</TableHead>
+                      <TableHead className="border text-xs">Kelas</TableHead>
+                      <TableHead className="border text-xs">Hafalan</TableHead>
+                      <TableHead className="border text-xs">Tilawah</TableHead>
+                      <TableHead className="border text-xs">Jilid</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {jurnalRumahList.map((jurnal) => (
+                      <TableRow key={jurnal.id} className="text-xs">
+                        <TableCell className="border whitespace-nowrap">
+                          {new Date(jurnal.tanggal).toLocaleDateString('id-ID')}
+                        </TableCell>
+                        <TableCell className="border font-medium">
+                          {jurnal.siswa?.nama || 'Unknown'}
+                        </TableCell>
+                        <TableCell className="border">
+                          {jurnal.siswa?.kelas || '-'}
+                        </TableCell>
+                        <TableCell className="border">
+                          {jurnal.hafalan_surah ? (
+                            <span>{jurnal.hafalan_surah} {jurnal.hafalan_ayat}</span>
+                          ) : '-'}
+                        </TableCell>
+                        <TableCell className="border">
+                          {jurnal.tilawah_surah ? (
+                            <span>{jurnal.tilawah_surah} {jurnal.tilawah_ayat}</span>
+                          ) : '-'}
+                        </TableCell>
+                        <TableCell className="border">
+                          {jurnal.jilid_buku ? (
+                            <span>{jurnal.jilid_buku} Hal.{jurnal.jilid_halaman}</span>
+                          ) : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <BulletinBoard />
       </main>
