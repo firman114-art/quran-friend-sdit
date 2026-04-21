@@ -220,7 +220,14 @@ const MuridDetail = () => {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4 text-center">
                 <Star className="w-6 h-6 mx-auto text-accent mb-1" />
-                <p className="text-2xl font-bold">{records.filter(r => r.hafalan_predikat === 'A' || r.hafalan_predikat === 'Mumtaz').length}</p>
+                <p className="text-2xl font-bold">{
+                  records.reduce((count, r) => {
+                    const hafalanMumtaz = r.hafalan_predikat === 'A' || r.hafalan_predikat === 'Mumtaz' ? 1 : 0;
+                    const tilawahMumtaz = r.tilawah_predikat === 'A' || r.tilawah_predikat === 'Mumtaz' ? 1 : 0;
+                    const jilidMumtaz = r.jilid_predikat === 'A' || r.jilid_predikat === 'Mumtaz' ? 1 : 0;
+                    return count + hafalanMumtaz + tilawahMumtaz + jilidMumtaz;
+                  }, 0)
+                }</p>
                 <p className="text-xs text-muted-foreground">Mumtaz</p>
               </CardContent>
             </Card>
