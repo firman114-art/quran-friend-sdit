@@ -502,76 +502,83 @@ const GuruDashboard = () => {
                       )}
 
                       {/* Jurnal Rumah */}
-                      {jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id)).length > 0 && (
-                        <Card className="border-0 shadow-sm">
-                          <CardHeader className="pb-3">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                              <Home className="w-5 h-5 text-success" />
-                              Jurnal Rumah — Dibuat oleh Orang Tua
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                          <div className="overflow-x-auto">
-                            <Table className="border">
-                              <TableHeader>
-                                <TableRow className="bg-gray-50">
-                                  <TableHead className="border text-xs">Tanggal</TableHead>
-                                  <TableHead className="border text-xs">Nama Murid</TableHead>
-                                  <TableHead className="border text-xs">Hafalan</TableHead>
-                                  <TableHead className="border text-xs">Tilawah</TableHead>
-                                  <TableHead className="border text-xs">Jilid</TableHead>
-                                  <TableHead className="border text-xs">Catatan Guru</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {jurnalRumah
-                                  .filter(j => kelasStudentIds.includes(j.siswa_id))
-                                  .map((jurnal) => {
-                                    const student = students.find(s => s.id === jurnal.siswa_id);
-                                    return (
-                                      <TableRow key={jurnal.id} className="text-xs">
-                                        <TableCell className="border whitespace-nowrap">
-                                          {new Date(jurnal.tanggal).toLocaleDateString('id-ID')}
-                                        </TableCell>
-                                        <TableCell className="border font-medium">
-                                          {student?.nama || 'Unknown'}
-                                        </TableCell>
-                                        <TableCell className="border">
-                                          {jurnal.hafalan_surah ? (
-                                            <span>{jurnal.hafalan_surah} {jurnal.hafalan_ayat}</span>
-                                          ) : '-'}
-                                        </TableCell>
-                                        <TableCell className="border">
-                                          {jurnal.tilawah_surah ? (
-                                            <span>{jurnal.tilawah_surah} {jurnal.tilawah_ayat}</span>
-                                          ) : '-'}
-                                        </TableCell>
-                                        <TableCell className="border">
-                                          {jurnal.jilid_buku ? (
-                                            <span>
-                                              {jurnal.jilid_buku} Hal.{jurnal.jilid_halaman}
-                                              {(jurnal.jilid_kesalahan_tajwid || jurnal.jilid_kesalahan_kelancaran || jurnal.jilid_kesalahan_fasohah) && (
-                                                <span className="text-xs text-muted-foreground block">
-                                                  Tajwid: {jurnal.jilid_kesalahan_tajwid || 0}, 
-                                                  Kelancaran: {jurnal.jilid_kesalahan_kelancaran || 0}, 
-                                                  Fasohah: {jurnal.jilid_kesalahan_fasohah || 0}
-                                                </span>
-                                              )}
-                                            </span>
-                                          ) : '-'}
-                                        </TableCell>
-                                        <TableCell className="border max-w-[150px] truncate">
-                                          {jurnal.catatan || '-'}
-                                        </TableCell>
+                      {(() => {
+                        const filteredJurnalRumah = jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id));
+                        return (
+                          <Card className="border-0 shadow-sm">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-lg flex items-center gap-2">
+                                <Home className="w-5 h-5 text-success" />
+                                Jurnal Rumah — Dibuat oleh Orang Tua
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              {filteredJurnalRumah.length === 0 ? (
+                                <p className="text-sm text-muted-foreground text-center py-4">
+                                  Belum ada jurnal rumah dari siswa kelas ini.
+                                </p>
+                              ) : (
+                                <div className="overflow-x-auto">
+                                  <Table className="border">
+                                    <TableHeader>
+                                      <TableRow className="bg-gray-50">
+                                        <TableHead className="border text-xs">Tanggal</TableHead>
+                                        <TableHead className="border text-xs">Nama Murid</TableHead>
+                                        <TableHead className="border text-xs">Hafalan</TableHead>
+                                        <TableHead className="border text-xs">Tilawah</TableHead>
+                                        <TableHead className="border text-xs">Jilid</TableHead>
+                                        <TableHead className="border text-xs">Catatan</TableHead>
                                       </TableRow>
-                                    );
-                                  })}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      )}
+                                    </TableHeader>
+                                    <TableBody>
+                                      {filteredJurnalRumah.map((jurnal) => {
+                                        const student = students.find(s => s.id === jurnal.siswa_id);
+                                        return (
+                                          <TableRow key={jurnal.id} className="text-xs">
+                                            <TableCell className="border whitespace-nowrap">
+                                              {new Date(jurnal.tanggal).toLocaleDateString('id-ID')}
+                                            </TableCell>
+                                            <TableCell className="border font-medium">
+                                              {student?.nama || 'Unknown'}
+                                            </TableCell>
+                                            <TableCell className="border">
+                                              {jurnal.hafalan_surah ? (
+                                                <span>{jurnal.hafalan_surah} {jurnal.hafalan_ayat}</span>
+                                              ) : '-'}
+                                            </TableCell>
+                                            <TableCell className="border">
+                                              {jurnal.tilawah_surah ? (
+                                                <span>{jurnal.tilawah_surah} {jurnal.tilawah_ayat}</span>
+                                              ) : '-'}
+                                            </TableCell>
+                                            <TableCell className="border">
+                                              {jurnal.jilid_buku ? (
+                                                <span>
+                                                  {jurnal.jilid_buku} Hal.{jurnal.jilid_halaman}
+                                                  {(jurnal.jilid_kesalahan_tajwid || jurnal.jilid_kesalahan_kelancaran || jurnal.jilid_kesalahan_fasohah) && (
+                                                    <span className="text-xs text-muted-foreground block">
+                                                      Tajwid: {jurnal.jilid_kesalahan_tajwid || 0}, 
+                                                      Kelancaran: {jurnal.jilid_kesalahan_kelancaran || 0}, 
+                                                      Fasohah: {jurnal.jilid_kesalahan_fasohah || 0}
+                                                    </span>
+                                                  )}
+                                                </span>
+                                              ) : '-'}
+                                            </TableCell>
+                                            <TableCell className="border max-w-[150px] truncate">
+                                              {jurnal.catatan || '-'}
+                                            </TableCell>
+                                          </TableRow>
+                                        );
+                                      })}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        );
+                      })()}
                     </div>
                   )}
                 </CardContent>
