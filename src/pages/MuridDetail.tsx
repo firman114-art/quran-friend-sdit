@@ -245,41 +245,134 @@ const MuridDetail = () => {
             </Card>
           )}
 
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">2 Catatan Terakhir</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {lastTwo.length === 0 && <p className="text-sm text-muted-foreground">Belum ada catatan.</p>}
-              {lastTwo.map(r => {
-                const jurnalHariIni = jurnalKelas.find(j => j.tanggal === r.tanggal);
-                return (
-                  <div key={r.id} className="p-3 rounded-lg bg-secondary/50 space-y-1">
-                    <p className="text-xs font-medium text-primary">{r.tanggal}</p>
-                    {r.hafalan_surah && (
-                      <p className="text-sm">🕌 Hafalan: {r.hafalan_surah} Ayat {r.hafalan_ayat}
-                        {r.hafalan_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.hafalan_predikat}</Badge>}
-                      </p>
-                    )}
-                    {(r.tilawah_surah || r.tilawah_ayat) && (
-                      <p className="text-sm font-semibold">📖 Tilawah: {r.tilawah_surah || '-'} Ayat {r.tilawah_ayat || '-'}
-                        {r.tilawah_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.tilawah_predikat}</Badge>}
-                      </p>
-                    )}
-                    {r.jilid_buku && (
-                      <p className="text-sm font-semibold">📕 Jilid: {r.jilid_buku} Hal. {r.jilid_halaman}
-                        {r.jilid_predikat && <Badge className="ml-2 text-xs bg-primary/10 text-primary">{r.jilid_predikat}</Badge>}
-                      </p>
-                    )}
-                    {jurnalHariIni?.tugas_rumah && (
-                      <p className="text-xs text-amber-600 font-medium">📋 Tugas Rumah: {jurnalHariIni.tugas_rumah}</p>
-                    )}
-                    {r.catatan_guru && <p className="text-xs text-muted-foreground italic">📝 {r.catatan_guru}</p>}
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 gap-3">
+            {/* Jilid Terakhir */}
+            {records.find(r => r.jilid_buku) && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">📕 Jilid Terakhir</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const r = records.find(rec => rec.jilid_buku);
+                    const jurnalHariIni = r ? jurnalKelas.find(j => j.tanggal === r.tanggal) : null;
+                    return r ? (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{r.tanggal}</p>
+                        <p className="text-sm font-semibold">{r.jilid_buku} Hal. {r.jilid_halaman}</p>
+                        {r.jilid_predikat && <Badge className="text-xs bg-primary/10 text-primary">{r.jilid_predikat}</Badge>}
+                        {jurnalHariIni?.tugas_rumah && (
+                          <p className="text-xs text-amber-600 font-medium mt-1">� Tugas: {jurnalHariIni.tugas_rumah}</p>
+                        )}
+                      </div>
+                    ) : null;
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Tilawah Terakhir */}
+            {records.find(r => r.tilawah_surah || r.tilawah_ayat) && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">📖 Tilawah Terakhir</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const r = records.find(rec => rec.tilawah_surah || rec.tilawah_ayat);
+                    const jurnalHariIni = r ? jurnalKelas.find(j => j.tanggal === r.tanggal) : null;
+                    return r ? (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{r.tanggal}</p>
+                        <p className="text-sm font-semibold">{r.tilawah_surah || '-'} Ayat {r.tilawah_ayat || '-'}</p>
+                        {r.tilawah_predikat && <Badge className="text-xs bg-primary/10 text-primary">{r.tilawah_predikat}</Badge>}
+                        {jurnalHariIni?.tugas_rumah && (
+                          <p className="text-xs text-amber-600 font-medium mt-1">📋 Tugas: {jurnalHariIni.tugas_rumah}</p>
+                        )}
+                      </div>
+                    ) : null;
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Hafalan Terakhir */}
+            {records.find(r => r.hafalan_surah) && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">🕌 Hafalan Terakhir</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const r = records.find(rec => rec.hafalan_surah);
+                    const jurnalHariIni = r ? jurnalKelas.find(j => j.tanggal === r.tanggal) : null;
+                    return r ? (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{r.tanggal}</p>
+                        <p className="text-sm font-semibold">{r.hafalan_surah} Ayat {r.hafalan_ayat}</p>
+                        {r.hafalan_predikat && <Badge className="text-xs bg-primary/10 text-primary">{r.hafalan_predikat}</Badge>}
+                        {jurnalHariIni?.tugas_rumah && (
+                          <p className="text-xs text-amber-600 font-medium mt-1">📋 Tugas: {jurnalHariIni.tugas_rumah}</p>
+                        )}
+                      </div>
+                    ) : null;
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Catatan Guru Terakhir */}
+            {records.find(r => r.catatan_guru) && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">📝 Catatan Guru Terakhir</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const r = records.find(rec => rec.catatan_guru);
+                    const jurnalHariIni = r ? jurnalKelas.find(j => j.tanggal === r.tanggal) : null;
+                    return r ? (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{r.tanggal}</p>
+                        <p className="text-sm italic text-muted-foreground">{r.catatan_guru}</p>
+                        {jurnalHariIni?.tugas_rumah && (
+                          <p className="text-xs text-amber-600 font-medium mt-1">📋 Tugas: {jurnalHariIni.tugas_rumah}</p>
+                        )}
+                      </div>
+                    ) : null;
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Tugas Rumah Terakhir */}
+            {jurnalKelas.find(j => j.tugas_rumah) && (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">📋 Tugas Rumah Terakhir</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const j = jurnalKelas.find(jr => jr.tugas_rumah);
+                    return j ? (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">{j.tanggal}</p>
+                        <p className="text-sm font-semibold text-amber-600">{j.tugas_rumah}</p>
+                      </div>
+                    ) : null;
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
+            {records.length === 0 && jurnalKelas.length === 0 && (
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-4 text-center">
+                  <p className="text-sm text-muted-foreground">Belum ada catatan.</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
 
           {classStudents.length > 0 && (
             <Card className="border-0 shadow-sm">
