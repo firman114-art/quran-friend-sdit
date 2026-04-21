@@ -14,6 +14,7 @@ import DailyInputForm from '@/components/DailyInputForm';
 import AddStudentForm from '@/components/AddStudentForm';
 import MonthlyRecap from '@/components/MonthlyRecap';
 import JurnalRecap from '@/components/JurnalRecap';
+import JurnalRumahRecap from '@/components/JurnalRumahRecap';
 import JurnalKelasForm from '@/components/JurnalKelasForm';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
@@ -603,6 +604,23 @@ const GuruDashboard = () => {
                     }
                   }}
                 />
+
+                {/* Rekap Jurnal Rumah - Dibuat oleh Orang Tua */}
+                {jurnalRumah.filter(j => {
+                  const student = students.find(s => s.id === j.siswa_id);
+                  return student?.kelas_id === currentKelas?.id;
+                }).length > 0 && (
+                  <div className="mt-6">
+                    <JurnalRumahRecap
+                      jurnals={jurnalRumah.filter(j => {
+                        const student = students.find(s => s.id === j.siswa_id);
+                        return student?.kelas_id === currentKelas?.id;
+                      })}
+                      students={students}
+                      kelasNama={currentKelas?.nama_kelas || ''}
+                    />
+                  </div>
+                )}
               </>
             )}
           </>
