@@ -200,13 +200,17 @@ const Index = () => {
         </div>
 
         {/* Tabel Rekap Jurnal Rumah */}
-        {jurnalRumahList.length > 0 && (
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-4">
-              <h2 className="font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
-                <Home className="w-5 h-5 text-success" />
-                Rekap Jurnal Rumah
-              </h2>
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-4">
+            <h2 className="font-semibold text-lg text-foreground mb-4 flex items-center gap-2">
+              <Home className="w-5 h-5 text-success" />
+              Rekap Jurnal Rumah
+            </h2>
+            {loadingJurnal ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Memuat data...</p>
+            ) : jurnalRumahList.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Belum ada jurnal rumah yang diisi.</p>
+            ) : (
               <div className="overflow-x-auto">
                 <Table className="border">
                   <TableHeader>
@@ -251,9 +255,9 @@ const Index = () => {
                   </TableBody>
                 </Table>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
 
         <BulletinBoard />
       </main>
