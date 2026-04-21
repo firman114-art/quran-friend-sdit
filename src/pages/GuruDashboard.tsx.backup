@@ -517,68 +517,65 @@ const GuruDashboard = () => {
                                 <TableRow className="bg-gray-50">
                                   <TableHead className="border text-xs">Tanggal</TableHead>
                                   <TableHead className="border text-xs">Nama Murid</TableHead>
-                                  <TableHead className="border text-xs">Hafalan</TableHead>
-                                  <TableHead className="border text-xs">Tilawah</TableHead>
-                                  <TableHead className="border text-xs">Jilid</TableHead>
-                                  <TableHead className="border text-xs">Catatan Guru</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {jurnalRumah
-                                  .filter(j => kelasStudentIds.includes(j.siswa_id))
-                                  .map((jurnal) => {
-                                    const student = students.find(s => s.id === jurnal.siswa_id);
-                                    return (
-                                      <TableRow key={jurnal.id} className="text-xs">
-                                        <TableCell className="border whitespace-nowrap">
-                                          {new Date(jurnal.tanggal).toLocaleDateString('id-ID')}
-                                        </TableCell>
-                                        <TableCell className="border font-medium">
-                                          {student?.nama || 'Unknown'}
-                                        </TableCell>
-                                        <TableCell className="border">
-                                          {jurnal.hafalan_surah ? (
-                                            <span>{jurnal.hafalan_surah} {jurnal.hafalan_ayat}</span>
-                                          ) : '-'}
-                                        </TableCell>
-                                        <TableCell className="border">
-                                          {jurnal.tilawah_surah ? (
-                                            <span>{jurnal.tilawah_surah} {jurnal.tilawah_ayat}</span>
-                                          ) : '-'}
-                                        </TableCell>
-                                        <TableCell className="border">
-                                          {jurnal.jilid_buku ? (
-                                            <span>
-                                              {jurnal.jilid_buku} Hal.{jurnal.jilid_halaman}
-                                              {(jurnal.jilid_kesalahan_tajwid || jurnal.jilid_kesalahan_kelancaran || jurnal.jilid_kesalahan_fasohah) && (
-                                                <span className="text-xs text-muted-foreground block">
-                                                  Tajwid: {jurnal.jilid_kesalahan_tajwid || 0}, 
-                                                  Kelancaran: {jurnal.jilid_kesalahan_kelancaran || 0}, 
-                                                  Fasohah: {jurnal.jilid_kesalahan_fasohah || 0}
-                                                </span>
-                                              )}
+                              <TableHead className="border text-xs">Hafalan</TableHead>
+                              <TableHead className="border text-xs">Tilawah</TableHead>
+                              <TableHead className="border text-xs">Jilid</TableHead>
+                              <TableHead className="border text-xs">Catatan</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {jurnalRumah
+                              .filter(j => kelasStudentIds.includes(j.siswa_id))
+                              .map((jurnal) => {
+                                const student = students.find(s => s.id === jurnal.siswa_id);
+                                return (
+                                  <TableRow key={jurnal.id} className="text-xs">
+                                    <TableCell className="border whitespace-nowrap">
+                                      {new Date(jurnal.tanggal).toLocaleDateString('id-ID')}
+                                    </TableCell>
+                                    <TableCell className="border font-medium">
+                                      {student?.nama || 'Unknown'}
+                                    </TableCell>
+                                    <TableCell className="border">
+                                      {jurnal.hafalan_surah ? (
+                                        <span>{jurnal.hafalan_surah} {jurnal.hafalan_ayat}</span>
+                                      ) : '-'}
+                                    </TableCell>
+                                    <TableCell className="border">
+                                      {jurnal.tilawah_surah ? (
+                                        <span>{jurnal.tilawah_surah} {jurnal.tilawah_ayat}</span>
+                                      ) : '-'}
+                                    </TableCell>
+                                    <TableCell className="border">
+                                      {jurnal.jilid_buku ? (
+                                        <span>
+                                          {jurnal.jilid_buku} Hal.{jurnal.jilid_halaman}
+                                          {(jurnal.jilid_kesalahan_tajwid || jurnal.jilid_kesalahan_kelancaran || jurnal.jilid_kesalahan_fasohah) && (
+                                            <span className="text-xs text-muted-foreground block">
+                                              Tajwid: {jurnal.jilid_kesalahan_tajwid || 0}, 
+                                              Kelancaran: {jurnal.jilid_kesalahan_kelancaran || 0}, 
+                                              Fasohah: {jurnal.jilid_kesalahan_fasohah || 0}
                                             </span>
-                                          ) : '-'}
-                                        </TableCell>
-                                        <TableCell className="border max-w-[150px] truncate">
-                                          {jurnal.catatan || '-'}
-                                        </TableCell>
-                                      </TableRow>
-                                    );
-                                  })}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                                          )}
+                                        </span>
+                                      ) : '-'}
+                                    </TableCell>
+                                    <TableCell className="border max-w-[150px] truncate">
+                                      {jurnal.catatan || '-'}
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-            {tab === 'jurnal' && (
+        {tab === 'jurnal' && (
               <>
                 <div className="flex gap-2 mb-4">
                   <Button 
@@ -668,6 +665,6 @@ const GuruDashboard = () => {
       )}
     </div>
   );
-}
+};
 
 export default GuruDashboard;
