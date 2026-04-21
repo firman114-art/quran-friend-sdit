@@ -36,12 +36,26 @@ const JurnalRumahForm = () => {
   const [selectedSiswa, setSelectedSiswa] = useState<Siswa | null>(null);
   
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
+  
+  // Sholat 5 waktu
+  const [sholatSubuh, setSholatSubuh] = useState(false);
+  const [sholatDzuhur, setSholatDzuhur] = useState(false);
+  const [sholatAshar, setSholatAshar] = useState(false);
+  const [sholatMaghrib, setSholatMaghrib] = useState(false);
+  const [sholatIsya, setSholatIsya] = useState(false);
+  
+  // Murojaah
+  const [murojaahHafalan, setMurojaahHafalan] = useState('');
+  const [murojaahTilawah, setMurojaahTilawah] = useState('');
+  
+  // Legacy fields (kept for compatibility)
   const [hafalanSurah, setHafalanSurah] = useState('');
   const [hafalanAyat, setHafalanAyat] = useState('');
   const [tilawahSurah, setTilawahSurah] = useState('');
   const [tilawahAyat, setTilawahAyat] = useState('');
   const [jilidBuku, setJilidBuku] = useState('');
   const [jilidHalaman, setJilidHalaman] = useState('');
+  
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -96,6 +110,16 @@ const JurnalRumahForm = () => {
     const { error } = await supabase.from('jurnal_rumah').insert({
       siswa_id: selectedSiswa.id,
       tanggal,
+      // Sholat 5 waktu
+      sholat_subuh: sholatSubuh,
+      sholat_dzuhur: sholatDzuhur,
+      sholat_ashar: sholatAshar,
+      sholat_maghrib: sholatMaghrib,
+      sholat_isya: sholatIsya,
+      // Murojaah
+      murojaah_hafalan: murojaahHafalan || null,
+      murojaah_tilawah: murojaahTilawah || null,
+      // Legacy fields
       hafalan_surah: hafalanSurah || null,
       hafalan_ayat: hafalanAyat || null,
       tilawah_surah: tilawahSurah || null,
@@ -199,6 +223,57 @@ const JurnalRumahForm = () => {
                   <Calendar className="w-4 h-4" /> Tanggal
                 </Label>
                 <Input type="date" value={tanggal} onChange={e => setTanggal(e.target.value)} required />
+              </div>
+
+              {/* Aktivitas Ibadah Harian */}
+              <div className="p-4 border rounded-lg space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <span className="text-lg">🕌</span> Aktivitas Ibadah Harian
+                </h4>
+                <div className="grid grid-cols-5 gap-2">
+                  {[
+                    { label: 'Subuh', state: sholatSubuh, setState: setSholatSubuh },
+                    { label: 'Dzuhur', state: sholatDzuhur, setState: setSholatDzuhur },
+                    { label: 'Ashar', state: sholatAshar, setState: setSholatAshar },
+                    { label: 'Maghrib', state: sholatMaghrib, setState: setSholatMaghrib },
+                    { label: 'Isya', state: sholatIsya, setState: setSholatIsya },
+                  ].map((prayer) => (
+                    <label key={prayer.label} className="flex flex-col items-center gap-2 p-2 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted">
+                      <span className="text-xs font-medium">{prayer.label}</span>
+                      <input
+                        type="checkbox"
+                        checked={prayer.state}
+                        onChange={(e) => prayer.setState(e.target.checked)}
+                        className="w-4 h-4 accent-primary"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Murojaah Al-Quran */}
+              <div className="p-4 border rounded-lg space-y-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-primary" /> Murojaah Al-Quran
+                </h4>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs">Murojaah Hafalan</Label>
+                    <Input 
+                      placeholder="Contoh: Surah Al-Mulk ayat 1-10"
+                      value={murojaahHafalan}
+                      onChange={e => setMurojaahHafalan(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Murojaah Tilawah</Label>
+                    <Input 
+                      placeholder="Contoh: Buku Jilid 2 halaman 5-10"
+                      value={murojaahTilawah}
+                      onChange={e => setMurojaahTilawah(e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Hafalan */}
