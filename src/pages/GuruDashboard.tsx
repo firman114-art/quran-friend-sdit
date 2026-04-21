@@ -502,11 +502,14 @@ const GuruDashboard = () => {
 
                       {/* Jurnal Rumah */}
                       {jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id)).length > 0 && (
-                        <div>
-                          <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
-                            <span className="w-2 h-2 bg-success rounded-full"></span>
-                            Jurnal Rumah (Murid/Orang Tua)
-                          </h3>
+                        <Card className="border-0 shadow-sm">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <Home className="w-5 h-5 text-success" />
+                              Jurnal Rumah — Dibuat oleh Orang Tua
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
                           <div className="overflow-x-auto">
                             <Table className="border">
                               <TableHeader>
