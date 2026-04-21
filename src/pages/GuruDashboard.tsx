@@ -438,6 +438,7 @@ const GuruDashboard = () => {
                                   <TableHead className="border text-xs">Hafalan</TableHead>
                                   <TableHead className="border text-xs">Tilawah</TableHead>
                                   <TableHead className="border text-xs">Jilid</TableHead>
+                                  <TableHead className="border text-xs">Catatan Guru</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
@@ -489,6 +490,9 @@ const GuruDashboard = () => {
                                             )}
                                           </span>
                                         ) : '-'}
+                                      </TableCell>
+                                      <TableCell className="border max-w-[150px] truncate">
+                                        {record.catatan_guru || '-'}
                                       </TableCell>
                                     </TableRow>
                                   );
