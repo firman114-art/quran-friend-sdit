@@ -411,9 +411,6 @@ const GuruDashboard = () => {
                     <ClipboardList className="w-5 h-5 text-primary" />
                     Log Harian Murid — {currentKelas.nama_kelas}
                   </CardTitle>
-                  <Button size="sm" variant="outline" onClick={() => window.open('/jurnal-rumah', '_blank')}>
-                    <Home className="w-4 h-4 mr-1" /> Form Jurnal Rumah
-                  </Button>
                 </CardHeader>
                 <CardContent>
                   {kelasRecords.length === 0 && jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id)).length === 0 ? (
