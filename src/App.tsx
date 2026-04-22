@@ -10,6 +10,7 @@ import GuruDashboard from "./pages/GuruDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import MuridDetail from "./pages/MuridDetail";
 import JurnalRumahForm from "./pages/JurnalRumahForm";
+import InputAbsensiSiswa from "./pages/InputAbsensiSiswa";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/murid/:id" element={<MuridDetail />} />
             <Route path="/jurnal-rumah" element={<JurnalRumahForm />} />
+            <Route path="/absensi" element={<InputAbsensiSiswa />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

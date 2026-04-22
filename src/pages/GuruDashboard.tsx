@@ -314,6 +314,9 @@ const GuruDashboard = () => {
                 className={tab === 'jurnal' ? 'gradient-hero text-primary-foreground' : ''}>
                 <BookOpen className="w-4 h-4 mr-1" /> Jurnal
               </Button>
+              <Button size="sm" variant="outline" onClick={() => navigate('/absensi')}>
+                <Check className="w-4 h-4 mr-1" /> Absensi
+              </Button>
             </div>
 
             {tab === 'students' && (

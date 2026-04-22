@@ -294,6 +294,64 @@ export type Database = {
           },
         ]
       }
+      absensi_harian: {
+        Row: {
+          id: string
+          siswa_id: string
+          kelas_id: string
+          guru_id: string
+          tanggal: string
+          status: "hadir" | "sakit" | "izin" | "alpa"
+          keterangan: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          siswa_id: string
+          kelas_id: string
+          guru_id: string
+          tanggal: string
+          status: "hadir" | "sakit" | "izin" | "alpa"
+          keterangan?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          siswa_id?: string
+          kelas_id?: string
+          guru_id?: string
+          tanggal?: string
+          status?: "hadir" | "sakit" | "izin" | "alpa"
+          keterangan?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "absensi_harian_siswa_id_fkey"
+            columns: ["siswa_id"]
+            isOneToOne: false
+            referencedRelation: "siswa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "absensi_harian_kelas_id_fkey"
+            columns: ["kelas_id"]
+            isOneToOne: false
+            referencedRelation: "kelas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "absensi_harian_guru_id_fkey"
+            columns: ["guru_id"]
+            isOneToOne: false
+            referencedRelation: "guru"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
