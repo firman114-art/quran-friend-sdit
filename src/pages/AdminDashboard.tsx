@@ -62,7 +62,7 @@ const AdminDashboard = () => {
   const [tab, setTab] = useState<'guru' | 'kelas' | 'murid' | 'recap' | 'pengaturan'>('guru');
   const [semesterAktif, setSemesterAktif] = useState('GANJIL');
   const [pengumumanList, setPengumumanList] = useState<any[]>([]);
-  const [newPengumuman, setNewPengumuman] = useState({ judul: '', isi: '', tipe: 'info' });
+  const [newPengumuman, setNewPengumuman] = useState({ judul: '', isi: '', tipe: 'info', autoDelete: false, durasiHari: 7 });
   const [selectedKelasId, setSelectedKelasId] = useState('');
   const [selectedKelasIdForMurid, setSelectedKelasIdForMurid] = useState('');
   // Add guru form
@@ -86,18 +86,20 @@ const AdminDashboard = () => {
   }, [profile]);
 
   const fetchAll = async () => {
-    const [guruRes, kelasRes, siswaRes, recRes, semesterRes] = await Promise.all([
+    const [guruRes, kelasRes, siswaRes, recRes, semesterRes, pengumumanRes] = await Promise.all([
       supabase.from('guru').select('id, nama, email, user_id, username, password_plain').order('nama'),
       supabase.from('kelas').select('*').order('nama_kelas'),
       supabase.from('siswa').select('*').order('nama'),
       supabase.from('daily_records').select('*').order('tanggal', { ascending: false }),
       supabase.from('pengaturan' as any).select('*').eq('key', 'semester_aktif').maybeSingle(),
+      supabase.from('pengumuman' as any).select('*').order('created_at', { ascending: false }),
     ]);
     if (guruRes.data) setGuruList(guruRes.data as any);
     if (kelasRes.data) setKelasList(kelasRes.data as any);
     if (siswaRes.data) setStudents(siswaRes.data as any);
     if (recRes.data) setRecords(recRes.data as any);
     if (semesterRes.data?.value) setSemesterAktif(semesterRes.data.value);
+    if (pengumumanRes.data) setPengumumanList(pengumumanRes.data as any);
   };
 
   const getTodayRecords = () => {
@@ -228,6 +230,25 @@ const AdminDashboard = () => {
   const handleLogout = async () => {
     await signOut();
     navigate('/');
+  };
+
+  // Cleanup expired pengumuman when tab changes to pengaturan
+  useEffect(() => {
+    if (tab === 'pengaturan') {
+      cleanupExpiredPengumuman();
+    }
+  }, [tab]);
+
+  const cleanupExpiredPengumuman = async () => {
+    const now = new Date().toISOString();
+    const expiredPengumuman = pengumumanList.filter(p => p.expired_at && p.expired_at < now);
+    
+    if (expiredPengumuman.length > 0) {
+      for (const p of expiredPengumuman) {
+        await supabase.from('pengumuman' as any).delete().eq('id', p.id);
+      }
+      fetchAll();
+    }
   };
 
   if (loading || !profile) return null;
@@ -659,26 +680,152 @@ const AdminDashboard = () => {
                   <option value="warning">Warning</option>
                   <option value="success">Success</option>
                 </select>
+                
+                {/* Auto-delete settings */}
+                <div className="p-3 bg-gray-50 rounded-lg border">
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="checkbox"
+                      id="autoDelete"
+                      checked={newPengumuman.autoDelete}
+                      onChange={(e) => setNewPengumuman({...newPengumuman, autoDelete: e.target.checked})}
+                      className="rounded border-gray-300"
+                    />
+                    <Label htmlFor="autoDelete" className="text-xs font-medium cursor-pointer">
+                      Hapus otomatis setelah periode tertentu
+                    </Label>
+                  </div>
+                  {newPengumuman.autoDelete && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <Label className="text-xs">Hapus setelah:</Label>
+                      <select
+                        value={newPengumuman.durasiHari}
+                        onChange={(e) => setNewPengumuman({...newPengumuman, durasiHari: parseInt(e.target.value)})}
+                        className="text-sm p-1 border rounded"
+                      >
+                        <option value={3}>3 hari</option>
+                        <option value={7}>7 hari</option>
+                        <option value={14}>14 hari</option>
+                        <option value={30}>30 hari</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
               </div>
               <Button onClick={async () => {
                 if (!newPengumuman.judul || !newPengumuman.isi) {
                   toast({ title: 'Error', description: 'Judul dan isi harus diisi', variant: 'destructive' });
                   return;
                 }
+                // Calculate expired_at if auto-delete is enabled
+                let expiredAt = null;
+                if (newPengumuman.autoDelete) {
+                  const date = new Date();
+                  date.setDate(date.getDate() + newPengumuman.durasiHari);
+                  expiredAt = date.toISOString();
+                }
+                
                 const { error } = await (supabase.from('pengumuman' as any).insert({
                   judul: newPengumuman.judul,
                   isi: newPengumuman.isi,
                   tipe: newPengumuman.tipe,
-                  aktif: true
+                  aktif: true,
+                  expired_at: expiredAt
                 }));
                 if (error) toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
                 else {
-                  toast({ title: 'Berhasil', description: 'Pengumuman ditambahkan' });
-                  setNewPengumuman({ judul: '', isi: '', tipe: 'info' });
+                  const msg = newPengumuman.autoDelete 
+                    ? `Pengumuman ditambahkan. Akan dihapus otomatis dalam ${newPengumuman.durasiHari} hari.`
+                    : 'Pengumuman ditambahkan';
+                  toast({ title: 'Berhasil', description: msg });
+                  setNewPengumuman({ judul: '', isi: '', tipe: 'info', autoDelete: false, durasiHari: 7 });
+                  fetchAll();
                 }
               }}>
                 Tambah Pengumuman
               </Button>
+              
+              {/* Daftar Pengumuman dengan Auto-Cleanup */}
+              {pengumumanList.length > 0 && (
+                <div className="mt-6 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Daftar Pengumuman</Label>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-6"
+                      onClick={async () => {
+                        const now = new Date().toISOString();
+                        const expiredPengumuman = pengumumanList.filter(p => p.expired_at && p.expired_at < now);
+                        
+                        if (expiredPengumuman.length === 0) {
+                          toast({ title: 'Info', description: 'Tidak ada pengumuman yang expired' });
+                          return;
+                        }
+                        
+                        let deletedCount = 0;
+                        for (const p of expiredPengumuman) {
+                          const { error } = await supabase.from('pengumuman' as any).delete().eq('id', p.id);
+                          if (!error) deletedCount++;
+                        }
+                        
+                        toast({ 
+                          title: 'Berhasil', 
+                          description: `${deletedCount} pengumuman expired telah dihapus` 
+                        });
+                        fetchAll();
+                      }}
+                    >
+                      🧹 Bersihkan Expired
+                    </Button>
+                  </div>
+                  {pengumumanList.map((p) => (
+                    <div 
+                      key={p.id} 
+                      className={`p-3 rounded-lg border-l-4 ${
+                        p.tipe === 'warning' ? 'bg-amber-50 border-amber-400' :
+                        p.tipe === 'success' ? 'bg-emerald-50 border-emerald-400' :
+                        'bg-blue-50 border-blue-400'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">{p.judul}</p>
+                            {p.expired_at && (
+                              <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                ⏰ Auto-hapus {new Date(p.expired_at).toLocaleDateString('id-ID')}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-600 mt-1 line-clamp-2">{p.isi}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(p.created_at).toLocaleDateString('id-ID')}
+                          </p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-7 w-7 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                          onClick={async () => {
+                            if (confirm(`Hapus pengumuman "${p.judul}"?`)) {
+                              const { error } = await supabase.from('pengumuman' as any).delete().eq('id', p.id);
+                              if (!error) {
+                                toast({ title: 'Berhasil', description: 'Pengumuman dihapus' });
+                                fetchAll();
+                              } else {
+                                toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
