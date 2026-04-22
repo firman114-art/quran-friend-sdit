@@ -738,8 +738,22 @@ const GuruDashboard = () => {
                                     </Table>
                                   </div>
                                 )}
+                                
+                                {/* Tombol Tutup di bagian bawah tabel */}
+                                {filteredJurnalRumah.length > 0 && (
+                                  <div className="mt-4 flex justify-center">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      onClick={() => setExpandJurnalRumah(false)}
+                                      className="text-muted-foreground hover:bg-gray-100"
+                                    >
+                                      <ChevronUp className="w-4 h-4 mr-1" /> Tutup Tabel
+                                    </Button>
+                                  </div>
+                                )}
                               </CardContent>
-                            )}
+                            </div>
                           </Card>
                         );
                       })()}
