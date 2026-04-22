@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import logoSekolah from '@/assets/logo-sekolah.jpg';
-import { Search, BookOpen, LogIn, Edit, Bell, Calendar, ChevronRight } from 'lucide-react';
+import { Search, BookOpen, LogIn, Edit } from 'lucide-react';
 import JurnalMuridForm from '@/components/JurnalMuridForm';
 import BulletinBoard from '@/components/BulletinBoard';
 
@@ -15,16 +15,6 @@ interface SiswaResult {
   kelas: string;
 }
 
-interface TugasRumah {
-  id: string;
-  tugas_rumah: string;
-  tanggal: string;
-  created_at: string;
-  kelas_id: string;
-  kelas?: {
-    nama_kelas: string;
-  };
-}
 
 const Index = () => {
   const navigate = useNavigate();
@@ -33,7 +23,6 @@ const Index = () => {
   const [searching, setSearching] = useState(false);
   const [showJurnalMuridForm, setShowJurnalMuridForm] = useState(false);
   const [pengumumanList, setPengumumanList] = useState<any[]>([]);
-  const [tugasRumahTerbaru, setTugasRumahTerbaru] = useState<TugasRumah | null>(null);
 
   useEffect(() => {
     // Fetch active announcements
@@ -47,30 +36,6 @@ const Index = () => {
       }
     };
     fetchPengumuman();
-
-    // Fetch tugas rumah terbaru
-    const fetchTugasRumah = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('jurnal_kelas' as any)
-          .select('id, tugas_rumah, tanggal, created_at, kelas_id, kelas(nama_kelas)')
-          .not('tugas_rumah', 'is', null)
-          .not('tugas_rumah', 'eq', '')
-          .order('tanggal', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (data) {
-          setTugasRumahTerbaru(data as any);
-        }
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching tugas rumah:', error);
-        }
-      } catch (e) {
-        console.error('Tugas rumah fetch error:', e);
-      }
-    };
-    fetchTugasRumah();
   }, []);
 
   useEffect(() => {
@@ -123,53 +88,6 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-lg space-y-6">
-        {/* Tugas Rumah Terbaru - Highlight Card */}
-        {tugasRumahTerbaru ? (
-          <Card className="border-2 border-amber-400 bg-gradient-to-r from-amber-50 to-orange-50 shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-amber-500 text-white text-xs px-3 py-1 rounded-bl-lg font-medium">
-              Terbaru
-            </div>
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-amber-100 p-2 rounded-full flex-shrink-0">
-                  <Bell className="w-5 h-5 text-amber-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-amber-800 text-sm mb-1">📋 Tugas Rumah Terbaru</h3>
-                  <p className="text-amber-900 font-medium text-sm leading-relaxed mb-2">
-                    {tugasRumahTerbaru.tugas_rumah}
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-amber-700">
-                    <Calendar className="w-3 h-3" />
-                    <span>
-                      {new Date(tugasRumahTerbaru.tanggal).toLocaleDateString('id-ID', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                  {tugasRumahTerbaru.kelas?.nama_kelas && (
-                    <p className="text-xs text-amber-600 mt-1">
-                      Kelas: {tugasRumahTerbaru.kelas.nama_kelas}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="border border-dashed border-gray-300 bg-gray-50">
-            <CardContent className="p-4 text-center">
-              <Bell className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500 italic">
-                Belum ada tugas rumah untuk hari ini. Tetap semangat!
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
         {pengumumanList.length > 0 && (
           <div className="space-y-3">
             {pengumumanList.map((p) => (

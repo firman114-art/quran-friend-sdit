@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, BookOpen, Star, MessageCircle, Download } from 'lucide-react';
+import { ArrowLeft, BookOpen, Star, MessageCircle, Download, Bell, Calendar, ClipboardList } from 'lucide-react';
 import { getPredikatLabel } from '@/lib/data';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
@@ -80,6 +80,13 @@ interface JurnalKelas {
   tugas_rumah: string | null;
 }
 
+interface TugasRumahTerbaru {
+  id: string;
+  tugas_rumah: string;
+  tanggal: string;
+  kelas_id: string;
+}
+
 const MuridDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -88,6 +95,7 @@ const MuridDetail = () => {
   const [loading, setLoading] = useState(true);
   const [classStudents, setClassStudents] = useState<ClassStudent[]>([]);
   const [jurnalKelas, setJurnalKelas] = useState<JurnalKelas[]>([]);
+  const [tugasRumahTerbaru, setTugasRumahTerbaru] = useState<TugasRumahTerbaru | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -101,6 +109,21 @@ const MuridDetail = () => {
         // Fetch jurnal_kelas for this class to get tugas_rumah
         const { data: jurnalData } = await supabase.from('jurnal_kelas' as any).select('id, kelas_id, tanggal, tugas_rumah').eq('kelas_id', siswaData.kelas);
         if (jurnalData) setJurnalKelas(jurnalData as any);
+        
+        // Fetch tugas rumah terbaru untuk kelas ini
+        const { data: tugasData } = await supabase
+          .from('jurnal_kelas' as any)
+          .select('id, tugas_rumah, tanggal, kelas_id')
+          .eq('kelas_id', siswaData.kelas)
+          .not('tugas_rumah', 'is', null)
+          .not('tugas_rumah', 'eq', '')
+          .order('tanggal', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (tugasData) {
+          setTugasRumahTerbaru(tugasData as any);
+        }
         
         // Fetch other students from same class for ranking
         const { data: classStudentsData } = await supabase.from('siswa').select('id, nama').eq('kelas', siswaData.kelas);
@@ -196,6 +219,51 @@ const MuridDetail = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 max-w-lg space-y-4">
+        {/* Tugas Rumah Terbaru - Khusus untuk Kelas Murid Ini */}
+        {tugasRumahTerbaru ? (
+          <Card className="border-2 border-amber-400 bg-gradient-to-r from-amber-50 to-orange-50 shadow-lg relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-amber-500 text-white text-xs px-3 py-1 rounded-bl-lg font-medium animate-pulse">
+              Terbaru
+            </div>
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-amber-100 p-2 rounded-full flex-shrink-0">
+                  <ClipboardList className="w-5 h-5 text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-amber-800 text-sm mb-1 flex items-center gap-1">
+                    <Bell className="w-3 h-3" />
+                    Tugas Rumah Terbaru
+                  </h3>
+                  <p className="text-amber-900 font-medium text-sm leading-relaxed mb-2">
+                    {tugasRumahTerbaru.tugas_rumah}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-amber-700 bg-white/50 rounded-full px-2 py-1 w-fit">
+                    <Calendar className="w-3 h-3" />
+                    <span>
+                      {new Date(tugasRumahTerbaru.tanggal).toLocaleDateString('id-ID', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border border-dashed border-gray-300 bg-gray-50/50">
+            <CardContent className="p-4 text-center">
+              <Bell className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 italic">
+                Belum ada tugas rumah untuk hari ini. Tetap semangat!
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         <div ref={reportRef} className="space-y-4 bg-background p-2">
           {lastTilawahForCard && (
             <Card className="border-0 shadow-sm bg-primary/5">
