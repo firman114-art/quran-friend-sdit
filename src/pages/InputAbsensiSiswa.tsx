@@ -166,19 +166,40 @@ const InputAbsensiSiswa = () => {
     }));
 
     // Check if absensi already exists for this date and class
-    const { data: existingData } = await supabase
+    const { data: existingData, error: checkError } = await supabase
       .from('absensi_harian' as any)
       .select('siswa_id')
       .eq('kelas_id', selectedKelas)
       .eq('tanggal', tanggal);
 
+    // If table doesn't exist or RLS policy blocks read, show helpful message
+    if (checkError && (checkError.code === '42P01' || checkError.code === '403' || checkError.message?.includes('permission denied'))) {
+      toast({
+        title: 'Database Belum Siap',
+        description: 'Tabel absensi_harian belum dibuat atau RLS policy belum diatur. Silakan buat tabel di Supabase terlebih dahulu.',
+        variant: 'destructive',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     if (existingData && existingData.length > 0) {
       // Delete existing records for this date and class
-      await supabase
+      const { error: deleteError } = await supabase
         .from('absensi_harian' as any)
         .delete()
         .eq('kelas_id', selectedKelas)
         .eq('tanggal', tanggal);
+      
+      if (deleteError) {
+        toast({
+          title: 'Error',
+          description: 'Gagal mengupdate data lama: ' + deleteError.message,
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     // Insert new records
@@ -187,11 +208,25 @@ const InputAbsensiSiswa = () => {
       .insert(absensiRecords as any);
 
     if (error) {
-      toast({
-        title: 'Error',
-        description: 'Gagal menyimpan absensi: ' + error.message,
-        variant: 'destructive',
-      });
+      if (error.code === '403' || error.message?.includes('permission denied') || error.message?.includes('violates row-level security')) {
+        toast({
+          title: 'Akses Ditolak',
+          description: 'Anda tidak memiliki izin untuk menyimpan absensi. Pastikan tabel absensi_harian sudah dibuat dan RLS policy diatur dengan benar di Supabase.',
+          variant: 'destructive',
+        });
+      } else if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        toast({
+          title: 'Tabel Belum Ada',
+          description: 'Tabel absensi_harian belum dibuat. Silakan jalankan SQL setup di Supabase terlebih dahulu.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Gagal menyimpan absensi: ' + error.message,
+          variant: 'destructive',
+        });
+      }
       setIsSubmitting(false);
       return;
     }
