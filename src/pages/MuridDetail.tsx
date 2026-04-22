@@ -352,22 +352,38 @@ const MuridDetail = () => {
               </Card>
             )}
 
-            {/* Tugas Rumah Terakhir */}
-            {jurnalKelas.find(j => j.tugas_rumah) && (
+            {/* Tugas Rumah dari Guru */}
+            {jurnalKelas.filter(j => j.tugas_rumah).length > 0 && (
               <Card className="border-0 shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">📋 Tugas Rumah Terakhir</CardTitle>
+                  <CardTitle className="text-base">📋 Tugas Rumah dari Guru</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {(() => {
-                    const j = jurnalKelas.find(jr => jr.tugas_rumah);
-                    return j ? (
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">{j.tanggal}</p>
-                        <p className="text-sm font-semibold text-amber-600">{j.tugas_rumah}</p>
-                      </div>
-                    ) : null;
-                  })()}
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                    {jurnalKelas
+                      .filter(j => j.tugas_rumah)
+                      .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())
+                      .map((j) => (
+                        <div key={j.id} className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-amber-700">{j.tugas_rumah}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {new Date(j.tanggal).toLocaleDateString('id-ID', { 
+                                  weekday: 'long', 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </p>
+                            </div>
+                            <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full whitespace-nowrap">
+                              {new Date(j.tanggal).toLocaleDateString('id-ID')}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
                 </CardContent>
               </Card>
             )}
