@@ -134,13 +134,19 @@ const JurnalRumahForm = () => {
     const { data, error } = await (supabase as any).from('jurnal_rumah').insert(payload).select();
     
     console.log('Insert response:', { data, error });
+    console.log('Inserted data:', data?.[0]);
+    console.log('Hafalan surah in response:', data?.[0]?.hafalan_surah);
+    console.log('Tilawah surah in response:', data?.[0]?.tilawah_surah);
+    console.log('Jilid buku in response:', data?.[0]?.jilid_buku);
 
     setIsSubmitting(false);
 
     if (error) {
+      console.error('Insert error details:', error);
       toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Berhasil', description: 'Jurnal rumah telah disimpan!' });
+      console.log('Insert successful, data saved:', data);
+      toast({ title: 'Berhasil', description: `Jurnal rumah telah disimpan! ID: ${data?.[0]?.id || 'unknown'}` });
       // Reset form
       setHafalanSurah('');
       setHafalanAyat('');
