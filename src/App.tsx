@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import Index from "./pages/Index";
 import LoginPage from "./pages/LoginPage";
 import GuruDashboard from "./pages/GuruDashboard";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/absensi" element={<InputAbsensiSiswa />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <InstallPrompt />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

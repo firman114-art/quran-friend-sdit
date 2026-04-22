@@ -4,10 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Manajemen Al-Qur&#39;an
-SDIT Al-Insan Pinrang">
-    <meta name="author" content="Lovable" />
+    <title>Quran Friend SDIT</title>
+    <meta name="description" content="Manajemen Al-Quran SDIT Al-Insan Pinrang - Aplikasi Absensi dan Jurnal Mengaji">
+    <meta name="author" content="SDIT Al-Insan" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#dc2626">
+    <meta name="msapplication-TileColor" content="#dc2626">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Quran Friend">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Icons -->
+    <link rel="apple-touch-icon" href="/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512x512.png">
 
     <!-- TODO: Update og:title to match your application name -->
     
@@ -18,16 +33,29 @@ SDIT Al-Insan Pinrang">
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Lovable" />
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/AwFpkg4juaX1ZzbE3UnrTotFJoD2/social-images/social-1775280002157-IMG_5195.webp">
-    <meta property="og:title" content="Lovable App">
-  <meta name="twitter:title" content="Lovable App">
-  <meta property="og:description" content="Manajemen Al-Qur&#39;an
-SDIT Al-Insan Pinrang">
-  <meta name="twitter:description" content="Manajemen Al-Qur&#39;an
-SDIT Al-Insan Pinrang">
+    <meta property="og:title" content="Quran Friend SDIT">
+    <meta name="twitter:title" content="Quran Friend SDIT">
+    <meta property="og:description" content="Aplikasi Manajemen Al-Quran SDIT Al-Insan Pinrang - Absensi dan Jurnal Mengaji">
+    <meta name="twitter:description" content="Aplikasi Manajemen Al-Quran SDIT Al-Insan Pinrang - Absensi dan Jurnal Mengaji">
 </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
