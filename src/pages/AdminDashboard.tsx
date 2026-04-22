@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff, LogOut, Users, GraduationCap, BookOpen, UserPlus, Shield, TrendingUp, Activity, Calendar } from 'lucide-react';
+import { Eye, EyeOff, LogOut, Users, GraduationCap, BookOpen, UserPlus, Shield, TrendingUp, Activity, Calendar, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import MonthlyRecap from '@/components/MonthlyRecap';
 import AddStudentForm from '@/components/AddStudentForm';
@@ -339,9 +339,37 @@ const AdminDashboard = () => {
                 <div key={g.id} className="p-3 rounded-lg bg-muted/50 space-y-1">
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-sm">{g.nama}</p>
-                    <Badge variant="outline" className="text-xs">
-                      {kelasList.filter(k => k.guru_id === g.id).length} kelas
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {kelasList.filter(k => k.guru_id === g.id).length} kelas
+                      </Badge>
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        className="h-7 w-7 p-0"
+                        onClick={async () => {
+                          if (confirm(`Hapus guru ${g.nama}?\n\nSemua kelas yang diampu guru ini akan kehilangan pengampu.`)) {
+                            // Check if guru has classes
+                            const guruKelas = kelasList.filter(k => k.guru_id === g.id);
+                            
+                            // Delete guru from guru table
+                            const { error } = await supabase.from('guru').delete().eq('id', g.id);
+                            
+                            if (!error) {
+                              // Also delete from profiles
+                              await supabase.from('profiles').delete().eq('id', g.user_id);
+                              
+                              toast({ title: 'Berhasil', description: `Guru ${g.nama} telah dihapus.` });
+                              fetchAll();
+                            } else {
+                              toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+                            }
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground">{g.email}</p>
                   {g.username && <p className="text-xs">👤 Username: <span className="font-mono">{g.username}</span></p>}
