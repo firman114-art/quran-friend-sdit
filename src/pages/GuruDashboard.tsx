@@ -154,15 +154,20 @@ const GuruDashboard = () => {
       
       // Fetch jurnal rumah for these students (optional)
       try {
+        console.log('Fetching jurnal_rumah for studentIds:', studentIds);
         const jurnalRumahRes = await (supabase
           .from('jurnal_rumah' as any)
           .select('*')
           .in('siswa_id', studentIds)
           .order('tanggal', { ascending: false }));
-        console.log('Jurnal Rumah for class:', jurnalRumahRes.data?.length, jurnalRumahRes.error);
+        console.log('Jurnal Rumah response:', jurnalRumahRes);
+        console.log('Jurnal Rumah data count:', jurnalRumahRes.data?.length);
+        console.log('Jurnal Rumah error:', jurnalRumahRes.error);
         
-        if (jurnalRumahRes.data) setJurnalRumah(jurnalRumahRes.data as any);
-        else if (jurnalRumahRes.error) {
+        if (jurnalRumahRes.data) {
+          console.log('Setting jurnalRumah state with', jurnalRumahRes.data.length, 'items');
+          setJurnalRumah(jurnalRumahRes.data as any);
+        } else if (jurnalRumahRes.error) {
           console.error('Jurnal Rumah error:', jurnalRumahRes.error);
         }
       } catch (e) {
@@ -215,7 +220,8 @@ const GuruDashboard = () => {
   const filteredStudents = students.filter(s => 
     s.nama.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const kelasStudentIds = filteredStudents.map(s => s.id);
+  // Use all students in class for ID list (not filtered by search)
+  const kelasStudentIds = students.map(s => s.id);
   const kelasRecords = records.filter(r => kelasStudentIds.includes(r.siswa_id));
 
   return (
@@ -614,7 +620,15 @@ const GuruDashboard = () => {
 
                       {/* Jurnal Rumah - Collapsible dengan Preview */}
                       {(() => {
-                        const filteredJurnalRumah = jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id));
+                        console.log('DEBUG Jurnal Rumah - jurnalRumah length:', jurnalRumah.length);
+                        console.log('DEBUG Jurnal Rumah - kelasStudentIds length:', kelasStudentIds.length);
+                        console.log('DEBUG Jurnal Rumah - first few jurnal siswa_ids:', jurnalRumah.slice(0, 3).map(j => j.siswa_id));
+                        const filteredJurnalRumah = jurnalRumah.filter(j => {
+                          const isIncluded = kelasStudentIds.includes(j.siswa_id);
+                          console.log('DEBUG - checking siswa_id:', j.siswa_id, 'included:', isIncluded);
+                          return isIncluded;
+                        });
+                        console.log('DEBUG Jurnal Rumah - filtered count:', filteredJurnalRumah.length);
                         return (
                           <Card className="border rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
                             <CardHeader 
