@@ -396,7 +396,46 @@ const AdminDashboard = () => {
                       <p className="font-medium text-sm">{k.nama_kelas}</p>
                       <p className="text-xs text-muted-foreground">Guru: {guru?.nama || '-'}</p>
                     </div>
-                    <Badge variant="outline" className="text-xs">{count} murid</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">{count} murid</Badge>
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        className="h-7 w-7 p-0"
+                        onClick={async () => {
+                          if (confirm(`Hapus kelas ${k.nama_kelas}?\n\n${count} murid di kelas ini akan ikut terhapus. Tindakan ini tidak dapat dibatalkan.`)) {
+                            // Delete all students in this class
+                            const { error: deleteStudentsError } = await supabase
+                              .from('siswa')
+                              .delete()
+                              .eq('kelas_id', k.id);
+                            
+                            if (deleteStudentsError) {
+                              toast({ title: 'Gagal hapus murid', description: deleteStudentsError.message, variant: 'destructive' });
+                              return;
+                            }
+                            
+                            // Delete the class
+                            const { error: deleteKelasError } = await supabase
+                              .from('kelas')
+                              .delete()
+                              .eq('id', k.id);
+                            
+                            if (!deleteKelasError) {
+                              toast({ 
+                                title: 'Berhasil', 
+                                description: `Kelas ${k.nama_kelas} dan ${count} murid telah dihapus.` 
+                              });
+                              fetchAll();
+                            } else {
+                              toast({ title: 'Gagal hapus kelas', description: deleteKelasError.message, variant: 'destructive' });
+                            }
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
