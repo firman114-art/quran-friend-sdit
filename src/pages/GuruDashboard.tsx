@@ -453,7 +453,7 @@ const GuruDashboard = () => {
                       Belum ada log harian untuk kelas ini.
                     </p>
                   ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-4">
                       {/* Jurnal Sekolah - Collapsible dengan Preview */}
                       {kelasRecords.length > 0 && (
                         <Card className="border rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
