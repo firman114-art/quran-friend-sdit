@@ -96,8 +96,8 @@ const GuruDashboard = () => {
   const [showJurnalKelasForm, setShowJurnalKelasForm] = useState(false);
   const [tab, setTab] = useState<'students' | 'log' | 'recap' | 'jurnal'>('students');
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandJurnalSekolah, setExpandJurnalSekolah] = useState(true);
-  const [expandJurnalRumah, setExpandJurnalRumah] = useState(true);
+  const [expandJurnalSekolah, setExpandJurnalSekolah] = useState(false);
+  const [expandJurnalRumah, setExpandJurnalRumah] = useState(false);
 
   useEffect(() => {
     if (!loading && (!profile || profile.role !== 'guru')) {
@@ -454,9 +454,9 @@ const GuruDashboard = () => {
                     </p>
                   ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {/* Jurnal Sekolah - Collapsible */}
+                      {/* Jurnal Sekolah - Collapsible dengan Preview */}
                       {kelasRecords.length > 0 && (
-                        <Card className="border rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+                        <Card className="border rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
                           <CardHeader 
                             className="pb-2 cursor-pointer hover:bg-gray-50 transition-colors"
                             onClick={() => setExpandJurnalSekolah(!expandJurnalSekolah)}
@@ -465,15 +465,45 @@ const GuruDashboard = () => {
                               <div className="flex items-center gap-2">
                                 <School className="w-4 h-4 text-primary" />
                                 Jurnal Sekolah (Guru)
+                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                                  {kelasRecords.length} data
+                                </span>
                               </div>
-                              {expandJurnalSekolah ? (
-                                <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                              ) : (
-                                <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                              )}
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">
+                                  {expandJurnalSekolah ? 'Sembunyikan' : 'Lihat Detail'}
+                                </span>
+                                {expandJurnalSekolah ? (
+                                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                                ) : (
+                                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                )}
+                              </div>
                             </CardTitle>
                           </CardHeader>
-                          {expandJurnalSekolah && (
+                          
+                          {/* Preview 1 baris terakhir saat tertutup */}
+                          {!expandJurnalSekolah && kelasRecords.length > 0 && (() => {
+                            const latestRecord = kelasRecords[0];
+                            const student = students.find(s => s.id === latestRecord.siswa_id);
+                            return (
+                              <CardContent className="pt-0 pb-3">
+                                <div className="bg-blue-50/50 rounded-lg p-3 border border-blue-100">
+                                  <p className="text-xs text-blue-600 font-medium mb-1">📝 Entri Terbaru:</p>
+                                  <p className="text-sm text-gray-800">
+                                    <span className="font-medium">{student?.nama || 'Unknown'}</span>
+                                    <span className="text-gray-500"> • {new Date(latestRecord.tanggal).toLocaleDateString('id-ID')}</span>
+                                    {latestRecord.hafalan_surah && (
+                                      <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                                        {latestRecord.hafalan_surah}
+                                      </span>
+                                    )}
+                                  </p>
+                                </div>
+                              </CardContent>
+                            );
+                          })()}
+                          <div className={`overflow-hidden transition-all duration-500 ease-in-out ${expandJurnalSekolah ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                             <CardContent className="pt-0">
                               <div className="overflow-x-auto rounded-lg border">
                                 <Table className="border-0">
@@ -565,16 +595,28 @@ const GuruDashboard = () => {
                                   </TableBody>
                                 </Table>
                               </div>
+                              
+                              {/* Tombol Tutup di bagian bawah tabel */}
+                              <div className="mt-4 flex justify-center">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => setExpandJurnalSekolah(false)}
+                                  className="text-muted-foreground hover:bg-gray-100"
+                                >
+                                  <ChevronUp className="w-4 h-4 mr-1" /> Tutup Tabel
+                                </Button>
+                              </div>
                             </CardContent>
-                          )}
+                          </div>
                         </Card>
                       )}
 
-                      {/* Jurnal Rumah - Collapsible */}
+                      {/* Jurnal Rumah - Collapsible dengan Preview */}
                       {(() => {
                         const filteredJurnalRumah = jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id));
                         return (
-                          <Card className="border rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+                          <Card className="border rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
                             <CardHeader 
                               className="pb-2 cursor-pointer hover:bg-gray-50 transition-colors"
                               onClick={() => setExpandJurnalRumah(!expandJurnalRumah)}
@@ -583,15 +625,45 @@ const GuruDashboard = () => {
                                 <div className="flex items-center gap-2">
                                   <Home className="w-4 h-4 text-success" />
                                   Jurnal Rumah (Orang Tua)
+                                  <span className="text-xs bg-success/10 text-success px-2 py-0.5 rounded-full">
+                                    {filteredJurnalRumah.length} data
+                                  </span>
                                 </div>
-                                {expandJurnalRumah ? (
-                                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                                ) : (
-                                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                )}
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">
+                                    {expandJurnalRumah ? 'Sembunyikan' : 'Lihat Detail'}
+                                  </span>
+                                  {expandJurnalRumah ? (
+                                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                  )}
+                                </div>
                               </CardTitle>
                             </CardHeader>
-                            {expandJurnalRumah && (
+                            
+                            {/* Preview 1 baris terakhir saat tertutup */}
+                            {!expandJurnalRumah && filteredJurnalRumah.length > 0 && (() => {
+                              const latestJurnal = filteredJurnalRumah[0];
+                              const student = students.find(s => s.id === latestJurnal.siswa_id);
+                              return (
+                                <CardContent className="pt-0 pb-3">
+                                  <div className="bg-green-50/50 rounded-lg p-3 border border-green-100">
+                                    <p className="text-xs text-green-600 font-medium mb-1">🏠 Entri Terbaru:</p>
+                                    <p className="text-sm text-gray-800">
+                                      <span className="font-medium">{student?.nama || 'Unknown'}</span>
+                                      <span className="text-gray-500"> • {new Date(latestJurnal.tanggal).toLocaleDateString('id-ID')}</span>
+                                      {latestJurnal.hafalan_surah && (
+                                        <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                                          {latestJurnal.hafalan_surah}
+                                        </span>
+                                      )}
+                                    </p>
+                                  </div>
+                                </CardContent>
+                              );
+                            })()}
+                            <div className={`overflow-hidden transition-all duration-500 ease-in-out ${expandJurnalRumah ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                               <CardContent className="pt-0">
                                 {filteredJurnalRumah.length === 0 ? (
                                   <p className="text-sm text-muted-foreground text-center py-4">
