@@ -155,6 +155,12 @@ const GuruDashboard = () => {
       // Fetch jurnal rumah for these students (optional)
       try {
         console.log('Fetching jurnal_rumah for studentIds:', studentIds);
+        
+        // Try fetching ALL jurnal_rumah first (for debugging)
+        const allJurnalRes = await supabase.from('jurnal_rumah' as any).select('count', { count: 'exact', head: true });
+        console.log('Total jurnal_rumah in database:', allJurnalRes.count, allJurnalRes.error);
+        
+        // Fetch with filter
         const jurnalRumahRes = await (supabase
           .from('jurnal_rumah' as any)
           .select('*')
@@ -163,6 +169,20 @@ const GuruDashboard = () => {
         console.log('Jurnal Rumah response:', jurnalRumahRes);
         console.log('Jurnal Rumah data count:', jurnalRumahRes.data?.length);
         console.log('Jurnal Rumah error:', jurnalRumahRes.error);
+        
+        // Try alternative query - fetch one by one
+        if (!jurnalRumahRes.data || jurnalRumahRes.data.length === 0) {
+          console.log('Trying alternative fetch for first student...');
+          const firstStudentId = studentIds[0];
+          if (firstStudentId) {
+            const singleRes = await supabase
+              .from('jurnal_rumah' as any)
+              .select('*')
+              .eq('siswa_id', firstStudentId)
+              .limit(5);
+            console.log('Single student query result:', singleRes.data?.length, singleRes.error);
+          }
+        }
         
         if (jurnalRumahRes.data) {
           console.log('Setting jurnalRumah state with', jurnalRumahRes.data.length, 'items');
