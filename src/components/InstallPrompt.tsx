@@ -25,8 +25,8 @@ export function InstallPrompt() {
       const dismissedDate = new Date(hasDismissed);
       const now = new Date();
       const daysSinceDismissed = (now.getTime() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
-      // Show again after 7 days
-      if (daysSinceDismissed < 7) return;
+      // Show again after 3 days
+      if (daysSinceDismissed < 3) return;
     }
 
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -45,16 +45,15 @@ export function InstallPrompt() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // Show custom prompt after 5 seconds if not installed
+    // Show custom prompt after 3 seconds on ALL mobile devices
     const timer = setTimeout(() => {
-      if (!isInstalled && !deferredPrompt) {
-        // For iOS Safari or browsers without native install
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if (isIOS) {
+      if (!isInstalled) {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
           setIsVisible(true);
         }
       }
-    }, 5000);
+    }, 3000);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -64,9 +63,17 @@ export function InstallPrompt() {
   }, [isInstalled, deferredPrompt]);
 
   const handleInstall = async () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    
     if (!deferredPrompt) {
-      // iOS Safari instructions
-      alert('Untuk menginstall aplikasi:\n\n1. Tap tombol Share (📤) di bawah\n2. Pilih "Add to Home Screen"\n3. Tap "Add"');
+      if (isIOS) {
+        // iOS Safari instructions
+        alert('Untuk menginstall aplikasi AISHA:\n\n1. Tap tombol Share (📤) di bawah\n2. Scroll dan pilih "Add to Home Screen"\n3. Tap "Add"');
+      } else if (isAndroid) {
+        // Android Chrome instructions
+        alert('Untuk menginstall aplikasi AISHA:\n\n1. Tap menu Chrome (⋮) di pojok kanan atas\n2. Pilih "Tambahkan ke layar utama"\n3. Tap "Install"');
+      }
       return;
     }
 
