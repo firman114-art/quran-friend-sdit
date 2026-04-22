@@ -23,10 +23,6 @@ const JurnalKelasForm = ({ kelasId, kelasNama, guruId, onClose, onSuccess }: Pro
   const [tilawah, setTilawah] = useState('');
   const [tulisan, setTulisan] = useState('');
   const [materiPendamping, setMateriPendamping] = useState('');
-  const [jumlahHadir, setJumlahHadir] = useState(0);
-  const [jumlahSakit, setJumlahSakit] = useState(0);
-  const [jumlahIzin, setJumlahIzin] = useState(0);
-  const [jumlahAlpa, setJumlahAlpa] = useState(0);
   const [tugasRumah, setTugasRumah] = useState('');
   const [catatanKelas, setCatatanKelas] = useState('');
   const [saved, setSaved] = useState(false);
@@ -44,10 +40,6 @@ const JurnalKelasForm = ({ kelasId, kelasNama, guruId, onClose, onSuccess }: Pro
         tilawah: tilawah || null,
         tulisan: tulisan || null,
         materi_pendamping: materiPendamping || null,
-        jumlah_hadir: jumlahHadir,
-        jumlah_sakit: jumlahSakit,
-        jumlah_izin: jumlahIzin,
-        jumlah_alpa: jumlahAlpa,
         tugas_rumah: tugasRumah || null,
         catatan_kelas: catatanKelas || null,
       } as any);
@@ -117,29 +109,6 @@ const JurnalKelasForm = ({ kelasId, kelasNama, guruId, onClose, onSuccess }: Pro
             <div>
               <Label className="text-xs">Materi Pendamping</Label>
               <Input placeholder="Contoh: Materi Tajwid Bab Idgham" value={materiPendamping} onChange={e => setMateriPendamping(e.target.value)} />
-            </div>
-          </div>
-
-          {/* Rekap Absensi */}
-          <div className="p-3 rounded-lg bg-secondary space-y-3">
-            <p className="font-semibold text-sm text-secondary-foreground">📊 Rekap Absensi Kelas</p>
-            <div className="grid grid-cols-4 gap-3">
-              <div>
-                <Label className="text-xs">Hadir</Label>
-                <Input type="number" value={jumlahHadir} onChange={e => setJumlahHadir(parseInt(e.target.value) || 0)} placeholder="0" />
-              </div>
-              <div>
-                <Label className="text-xs">Sakit</Label>
-                <Input type="number" value={jumlahSakit} onChange={e => setJumlahSakit(parseInt(e.target.value) || 0)} placeholder="0" />
-              </div>
-              <div>
-                <Label className="text-xs">Izin</Label>
-                <Input type="number" value={jumlahIzin} onChange={e => setJumlahIzin(parseInt(e.target.value) || 0)} placeholder="0" />
-              </div>
-              <div>
-                <Label className="text-xs">Alpa</Label>
-                <Input type="number" value={jumlahAlpa} onChange={e => setJumlahAlpa(parseInt(e.target.value) || 0)} placeholder="0" />
-              </div>
             </div>
           </div>
 
