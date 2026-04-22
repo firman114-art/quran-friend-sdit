@@ -131,7 +131,7 @@ const JurnalRumahForm = () => {
     
     console.log('Submitting jurnal_rumah payload:', payload);
     
-    const { data, error } = await supabase.from('jurnal_rumah').insert(payload).select();
+    const { data, error } = await (supabase as any).from('jurnal_rumah').insert(payload).select();
     
     console.log('Insert response:', { data, error });
 
