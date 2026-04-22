@@ -297,24 +297,53 @@ const GuruDashboard = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 mb-4">
-              <Button size="sm" variant={tab === 'students' ? 'default' : 'outline'} onClick={() => setTab('students')}
-                className={tab === 'students' ? 'gradient-hero text-primary-foreground' : ''}>
+            <div className="flex gap-2 mb-4 flex-wrap">
+              <Button 
+                size="sm" 
+                variant={tab === 'students' ? 'default' : 'outline'} 
+                onClick={() => setTab('students')}
+                className={tab === 'students' 
+                  ? 'gradient-hero text-primary-foreground shadow-md border-b-2 border-primary-foreground/30' 
+                  : 'hover:bg-gray-100 transition-all'
+                }>
                 <Users className="w-4 h-4 mr-1" /> Murid
               </Button>
-              <Button size="sm" variant={tab === 'recap' ? 'default' : 'outline'} onClick={() => setTab('recap')}
-                className={tab === 'recap' ? 'gradient-hero text-primary-foreground' : ''}>
+              <Button 
+                size="sm" 
+                variant={tab === 'recap' ? 'default' : 'outline'} 
+                onClick={() => setTab('recap')}
+                className={tab === 'recap' 
+                  ? 'gradient-hero text-primary-foreground shadow-md border-b-2 border-primary-foreground/30' 
+                  : 'hover:bg-gray-100 transition-all'
+                }>
                 <ClipboardList className="w-4 h-4 mr-1" /> Rekap
               </Button>
-              <Button size="sm" variant={tab === 'log' ? 'default' : 'outline'} onClick={() => setTab('log')}
-                className={tab === 'log' ? 'gradient-hero text-primary-foreground' : ''}>
+              <Button 
+                size="sm" 
+                variant={tab === 'log' ? 'default' : 'outline'} 
+                onClick={() => setTab('log')}
+                className={tab === 'log' 
+                  ? 'gradient-hero text-primary-foreground shadow-md border-b-2 border-primary-foreground/30' 
+                  : 'hover:bg-gray-100 transition-all'
+                }>
                 <ClipboardList className="w-4 h-4 mr-1" /> Log Murid
               </Button>
-              <Button size="sm" variant={tab === 'jurnal' ? 'default' : 'outline'} onClick={() => setTab('jurnal')}
-                className={tab === 'jurnal' ? 'gradient-hero text-primary-foreground' : ''}>
+              <Button 
+                size="sm" 
+                variant={tab === 'jurnal' ? 'default' : 'outline'} 
+                onClick={() => setTab('jurnal')}
+                className={tab === 'jurnal' 
+                  ? 'gradient-hero text-primary-foreground shadow-md border-b-2 border-primary-foreground/30' 
+                  : 'hover:bg-gray-100 transition-all'
+                }>
                 <BookOpen className="w-4 h-4 mr-1" /> Jurnal
               </Button>
-              <Button size="sm" variant="outline" onClick={() => navigate('/absensi')}>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => navigate('/absensi')}
+                className="hover:bg-gray-100 transition-all"
+              >
                 <Check className="w-4 h-4 mr-1" /> Absensi
               </Button>
             </div>
@@ -427,7 +456,7 @@ const GuruDashboard = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {/* Jurnal Sekolah - Collapsible */}
                       {kelasRecords.length > 0 && (
-                        <Card className="border shadow-sm">
+                        <Card className="border rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
                           <CardHeader 
                             className="pb-2 cursor-pointer hover:bg-gray-50 transition-colors"
                             onClick={() => setExpandJurnalSekolah(!expandJurnalSekolah)}
@@ -446,70 +475,89 @@ const GuruDashboard = () => {
                           </CardHeader>
                           {expandJurnalSekolah && (
                             <CardContent className="pt-0">
-                              <div className="overflow-x-auto">
-                                <Table className="border">
-                                  <TableHeader>
-                                    <TableRow className="bg-gray-50">
-                                      <TableHead className="border text-xs">Tanggal</TableHead>
-                                      <TableHead className="border text-xs">Nama Murid</TableHead>
-                                      <TableHead className="border text-xs">Hafalan</TableHead>
-                                      <TableHead className="border text-xs">Tilawah</TableHead>
-                                      <TableHead className="border text-xs">Jilid</TableHead>
-                                      <TableHead className="border text-xs">Catatan Guru</TableHead>
+                              <div className="overflow-x-auto rounded-lg border">
+                                <Table className="border-0">
+                                  <TableHeader className="sticky top-0 z-10">
+                                    <TableRow className="bg-gray-100">
+                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Tanggal</TableHead>
+                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Nama Murid</TableHead>
+                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Hafalan</TableHead>
+                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Tilawah</TableHead>
+                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Jilid</TableHead>
+                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Catatan Guru</TableHead>
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                    {kelasRecords.map((record) => {
+                                    {kelasRecords.map((record, index) => {
                                       const student = students.find(s => s.id === record.siswa_id);
+                                      const getPredikatBadge = (predikat: string | null) => {
+                                        if (!predikat) return null;
+                                        const lowerPredikat = predikat.toLowerCase();
+                                        if (lowerPredikat.includes('mumtaz') || lowerPredikat === 'a') {
+                                          return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700 ml-1">{predikat}</span>;
+                                        } else if (lowerPredikat.includes('maqbul') || lowerPredikat === 'b') {
+                                          return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700 ml-1">{predikat}</span>;
+                                        } else if (lowerPredikat.includes('jayyid') || lowerPredikat === 'c') {
+                                          return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700 ml-1">{predikat}</span>;
+                                        }
+                                        return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-700 ml-1">{predikat}</span>;
+                                      };
                                       return (
-                                        <TableRow key={record.id} className="text-xs">
-                                          <TableCell className="border whitespace-nowrap">
+                                        <TableRow key={record.id} className={`text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-blue-50/50 transition-colors`}>
+                                          <TableCell className="py-3 px-4 whitespace-nowrap text-xs">
                                             {new Date(record.tanggal).toLocaleDateString('id-ID')}
                                           </TableCell>
-                                          <TableCell className="border font-medium">
+                                          <TableCell className="py-3 px-4 font-medium">
                                             {student?.nama || 'Unknown'}
                                           </TableCell>
-                                          <TableCell className="border">
+                                          <TableCell className="py-3 px-4">
                                             {record.hafalan_surah ? (
-                                              <span>
-                                                {record.hafalan_surah} 
-                                                {record.hafalan_predikat && ` (${record.hafalan_predikat})`}
-                                              </span>
-                                            ) : '-'}
+                                              <div className="leading-relaxed">
+                                                <span className="font-medium">{record.hafalan_surah}</span>
+                                                {getPredikatBadge(record.hafalan_predikat)}
+                                              </div>
+                                            ) : <span className="text-gray-400">-</span>}
                                           </TableCell>
-                                          <TableCell className="border">
+                                          <TableCell className="py-3 px-4">
                                             {(record.tilawah_surah || record.tilawah_ayat) ? (
-                                              <span>
-                                                {record.tilawah_surah || '-'}
-                                                {record.tilawah_ayat && ` ayat ${record.tilawah_ayat}`}
-                                                {record.tilawah_predikat && ` (${record.tilawah_predikat})`}
+                                              <div className="leading-relaxed">
+                                                <div>
+                                                  <span className="font-medium">{record.tilawah_surah || '-'}</span>
+                                                  {record.tilawah_ayat && <span className="text-gray-600"> ayat {record.tilawah_ayat}</span>}
+                                                  {getPredikatBadge(record.tilawah_predikat)}
+                                                </div>
                                                 {(record.tilawah_kesalahan_tajwid || record.tilawah_kesalahan_kelancaran || record.tilawah_kesalahan_fasohah) && (
-                                                  <span className="text-xs text-muted-foreground block">
-                                                    Tajwid: {record.tilawah_kesalahan_tajwid || 0}, 
-                                                    Kelancaran: {record.tilawah_kesalahan_kelancaran || 0}, 
-                                                    Fasohah: {record.tilawah_kesalahan_fasohah || 0}
-                                                  </span>
+                                                  <div className="text-xs text-gray-500 mt-1 space-x-2">
+                                                    <span>Tajwid: {record.tilawah_kesalahan_tajwid || 0}</span>
+                                                    <span>Kelancaran: {record.tilawah_kesalahan_kelancaran || 0}</span>
+                                                    <span>Fasohah: {record.tilawah_kesalahan_fasohah || 0}</span>
+                                                  </div>
                                                 )}
-                                              </span>
-                                            ) : '-'}
+                                              </div>
+                                            ) : <span className="text-gray-400">-</span>}
                                           </TableCell>
-                                          <TableCell className="border">
+                                          <TableCell className="py-3 px-4">
                                             {record.jilid_buku ? (
-                                              <span>
-                                                {record.jilid_buku} Hal.{record.jilid_halaman}
-                                                {record.jilid_predikat && ` (${record.jilid_predikat})`}
+                                              <div className="leading-relaxed">
+                                                <div>
+                                                  <span className="font-medium">{record.jilid_buku}</span>
+                                                  <span className="text-gray-600"> Hal.{record.jilid_halaman}</span>
+                                                  {getPredikatBadge(record.jilid_predikat)}
+                                                </div>
                                                 {(record.jilid_kesalahan_tajwid || record.jilid_kesalahan_kelancaran || record.jilid_kesalahan_fasohah) && (
-                                                  <span className="text-xs text-muted-foreground block">
-                                                    Tajwid: {record.jilid_kesalahan_tajwid || 0}, 
-                                                    Kelancaran: {record.jilid_kesalahan_kelancaran || 0}, 
-                                                    Fasohah: {record.jilid_kesalahan_fasohah || 0}
-                                                  </span>
+                                                  <div className="text-xs text-gray-500 mt-1 space-x-2">
+                                                    <span>Tajwid: {record.jilid_kesalahan_tajwid || 0}</span>
+                                                    <span>Kelancaran: {record.jilid_kesalahan_kelancaran || 0}</span>
+                                                    <span>Fasohah: {record.jilid_kesalahan_fasohah || 0}</span>
+                                                  </div>
                                                 )}
-                                              </span>
-                                            ) : '-'}
+                                              </div>
+                                            ) : <span className="text-gray-400">-</span>}
                                           </TableCell>
-                                          <TableCell className="border max-w-[150px] truncate">
-                                            {record.catatan_guru || '-'}
+                                          <TableCell className="py-3 px-4 max-w-[200px]">
+                                            {record.catatan_guru ? (
+                                              <p className="text-sm leading-relaxed text-gray-700">{record.catatan_guru}</p>
+                                            ) : <span className="text-gray-400">-</span>}
                                           </TableCell>
                                         </TableRow>
                                       );
@@ -526,7 +574,7 @@ const GuruDashboard = () => {
                       {(() => {
                         const filteredJurnalRumah = jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id));
                         return (
-                          <Card className="border shadow-sm">
+                          <Card className="border rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
                             <CardHeader 
                               className="pb-2 cursor-pointer hover:bg-gray-50 transition-colors"
                               onClick={() => setExpandJurnalRumah(!expandJurnalRumah)}
@@ -550,55 +598,66 @@ const GuruDashboard = () => {
                                     Belum ada jurnal rumah dari siswa kelas ini.
                                   </p>
                                 ) : (
-                                  <div className="overflow-x-auto">
-                                    <Table className="border">
-                                      <TableHeader>
-                                        <TableRow className="bg-gray-50">
-                                          <TableHead className="border text-xs">Tanggal</TableHead>
-                                          <TableHead className="border text-xs">Nama Murid</TableHead>
-                                          <TableHead className="border text-xs">Hafalan</TableHead>
-                                          <TableHead className="border text-xs">Tilawah</TableHead>
-                                          <TableHead className="border text-xs">Jilid</TableHead>
-                                          <TableHead className="border text-xs">Catatan</TableHead>
+                                  <div className="overflow-x-auto rounded-lg border">
+                                    <Table className="border-0">
+                                      <TableHeader className="sticky top-0 z-10">
+                                        <TableRow className="bg-gray-100">
+                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Tanggal</TableHead>
+                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Nama Murid</TableHead>
+                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Hafalan</TableHead>
+                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Tilawah</TableHead>
+                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Jilid</TableHead>
+                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Catatan</TableHead>
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
-                                        {filteredJurnalRumah.map((jurnal) => {
+                                        {filteredJurnalRumah.map((jurnal, index) => {
                                           const student = students.find(s => s.id === jurnal.siswa_id);
                                           return (
-                                            <TableRow key={jurnal.id} className="text-xs">
-                                              <TableCell className="border whitespace-nowrap">
+                                            <TableRow key={jurnal.id} className={`text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-green-50/50 transition-colors`}>
+                                              <TableCell className="py-3 px-4 whitespace-nowrap text-xs">
                                                 {new Date(jurnal.tanggal).toLocaleDateString('id-ID')}
                                               </TableCell>
-                                              <TableCell className="border font-medium">
+                                              <TableCell className="py-3 px-4 font-medium">
                                                 {student?.nama || 'Unknown'}
                                               </TableCell>
-                                              <TableCell className="border">
+                                              <TableCell className="py-3 px-4">
                                                 {jurnal.hafalan_surah ? (
-                                                  <span>{jurnal.hafalan_surah} {jurnal.hafalan_ayat}</span>
-                                                ) : '-'}
+                                                  <div className="leading-relaxed">
+                                                    <span className="font-medium">{jurnal.hafalan_surah}</span>
+                                                    {jurnal.hafalan_ayat && <span className="text-gray-600"> {jurnal.hafalan_ayat}</span>}
+                                                  </div>
+                                                ) : <span className="text-gray-400">-</span>}
                                               </TableCell>
-                                              <TableCell className="border">
+                                              <TableCell className="py-3 px-4">
                                                 {jurnal.tilawah_surah ? (
-                                                  <span>{jurnal.tilawah_surah} {jurnal.tilawah_ayat}</span>
-                                                ) : '-'}
+                                                  <div className="leading-relaxed">
+                                                    <span className="font-medium">{jurnal.tilawah_surah}</span>
+                                                    {jurnal.tilawah_ayat && <span className="text-gray-600"> {jurnal.tilawah_ayat}</span>}
+                                                  </div>
+                                                ) : <span className="text-gray-400">-</span>}
                                               </TableCell>
-                                              <TableCell className="border">
+                                              <TableCell className="py-3 px-4">
                                                 {jurnal.jilid_buku ? (
-                                                  <span>
-                                                    {jurnal.jilid_buku} Hal.{jurnal.jilid_halaman}
+                                                  <div className="leading-relaxed">
+                                                    <div>
+                                                      <span className="font-medium">{jurnal.jilid_buku}</span>
+                                                      <span className="text-gray-600"> Hal.{jurnal.jilid_halaman}</span>
+                                                    </div>
                                                     {(jurnal.jilid_kesalahan_tajwid || jurnal.jilid_kesalahan_kelancaran || jurnal.jilid_kesalahan_fasohah) && (
-                                                      <span className="text-xs text-muted-foreground block">
-                                                        Tajwid: {jurnal.jilid_kesalahan_tajwid || 0}, 
-                                                        Kelancaran: {jurnal.jilid_kesalahan_kelancaran || 0}, 
-                                                        Fasohah: {jurnal.jilid_kesalahan_fasohah || 0}
-                                                      </span>
+                                                      <div className="text-xs text-gray-500 mt-1 space-x-2">
+                                                        <span>Tajwid: {jurnal.jilid_kesalahan_tajwid || 0}</span>
+                                                        <span>Kelancaran: {jurnal.jilid_kesalahan_kelancaran || 0}</span>
+                                                        <span>Fasohah: {jurnal.jilid_kesalahan_fasohah || 0}</span>
+                                                      </div>
                                                     )}
-                                                  </span>
-                                                ) : '-'}
+                                                  </div>
+                                                ) : <span className="text-gray-400">-</span>}
                                               </TableCell>
-                                              <TableCell className="border max-w-[150px] truncate">
-                                                {jurnal.catatan || '-'}
+                                              <TableCell className="py-3 px-4 max-w-[200px]">
+                                                {jurnal.catatan ? (
+                                                  <p className="text-sm leading-relaxed text-gray-700">{jurnal.catatan}</p>
+                                                ) : <span className="text-gray-400">-</span>}
                                               </TableCell>
                                             </TableRow>
                                           );
