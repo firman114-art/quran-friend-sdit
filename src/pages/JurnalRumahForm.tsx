@@ -107,7 +107,7 @@ const JurnalRumahForm = () => {
 
     setIsSubmitting(true);
 
-    const { error } = await supabase.from('jurnal_rumah').insert({
+    const payload = {
       siswa_id: selectedSiswa.id,
       tanggal,
       // Sholat 5 waktu
@@ -127,7 +127,13 @@ const JurnalRumahForm = () => {
       jilid_buku: jilidBuku || null,
       jilid_halaman: jilidHalaman ? parseInt(jilidHalaman) : null,
       catatan: catatan || null,
-    });
+    };
+    
+    console.log('Submitting jurnal_rumah payload:', payload);
+    
+    const { data, error } = await supabase.from('jurnal_rumah').insert(payload).select();
+    
+    console.log('Insert response:', { data, error });
 
     setIsSubmitting(false);
 
