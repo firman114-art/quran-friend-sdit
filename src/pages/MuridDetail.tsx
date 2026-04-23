@@ -93,7 +93,7 @@ interface AbsensiHarian {
   kelas_id: string;
   guru_id: string;
   tanggal: string;
-  status: 'Hadir' | 'Sakit' | 'Izin' | 'Alpha';
+  status: 'hadir' | 'sakit' | 'izin' | 'alpa';
   keterangan: string | null;
   created_at: string;
 }
@@ -242,8 +242,8 @@ const MuridDetail = () => {
       if (!daily[a.tanggal]) {
         daily[a.tanggal] = { tanggal: a.tanggal, status: a.status, count: 0 };
       }
-      // Count only Hadir status as attendance
-      if (a.status === 'Hadir') {
+      // Count only hadir status as attendance
+      if (a.status === 'hadir') {
         daily[a.tanggal].count += 1;
       }
     });
@@ -397,7 +397,10 @@ const MuridDetail = () => {
                     <Tooltip 
                       formatter={(value: number, name: string, props: any) => {
                         const status = props?.payload?.status;
-                        return [value === 1 ? 'Hadir' : status === '-' ? 'Belum ada data' : status, 'Status'];
+                        // Kapitalisasi huruf pertama untuk tampilan
+                        const displayStatus = status === '-' ? 'Belum ada data' : 
+                          status ? status.charAt(0).toUpperCase() + status.slice(1) : '-';
+                        return [value === 1 ? 'Hadir' : displayStatus, 'Status'];
                       }}
                     />
                     <Bar 
