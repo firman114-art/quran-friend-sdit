@@ -178,11 +178,29 @@ const GuruDashboard = () => {
       try {
         console.log('Fetching jurnal_rumah for studentIds:', studentIds);
         console.log('First 3 studentIds:', studentIds.slice(0, 3));
+        console.log('StudentIds types:', studentIds.map((id: string) => typeof id));
         
         // Try fetching ALL jurnal_rumah first (for debugging)
         const allJurnalRes = await (supabase as any).from('jurnal_rumah').select('*').limit(5);
         console.log('Sample jurnal_rumah from DB:', allJurnalRes.data?.length, allJurnalRes.data?.[0]);
         console.log('Sample siswa_id from DB:', allJurnalRes.data?.[0]?.siswa_id);
+        console.log('All jurnal error:', allJurnalRes.error);
+        
+        // Try fetching with just count
+        const countRes = await (supabase as any).from('jurnal_rumah').select('*', { count: 'exact', head: true });
+        console.log('Total jurnal_rumah count:', countRes.count);
+        console.log('Count error:', countRes.error);
+        
+        // Fetch with filter - use eq for single first to test
+        if (studentIds.length > 0) {
+          const singleTestRes = await (supabase as any)
+            .from('jurnal_rumah')
+            .select('*')
+            .eq('siswa_id', studentIds[0])
+            .limit(1);
+          console.log('Single test for first student:', singleTestRes.data?.length);
+          console.log('Single test error:', singleTestRes.error);
+        }
         
         // Fetch with filter
         const jurnalRumahRes = await (supabase as any)
@@ -192,6 +210,7 @@ const GuruDashboard = () => {
           .order('tanggal', { ascending: false });
         console.log('Jurnal Rumah response count:', jurnalRumahRes.data?.length);
         console.log('Jurnal Rumah error:', jurnalRumahRes.error);
+        console.log('Jurnal Rumah data sample:', jurnalRumahRes.data?.[0]);
         
         // Try alternative query - fetch one by one
         if (!jurnalRumahRes.data || jurnalRumahRes.data.length === 0) {
