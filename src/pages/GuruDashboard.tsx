@@ -72,6 +72,7 @@ interface JurnalRow {
   jumlah_sakit: number | null;
   jumlah_izin: number | null;
   jumlah_alpa: number | null;
+  absensi: string | null; // Format: H:25, S:2, I:1, A:0
   tugas_rumah: string | null;
   catatan_kelas: string | null;
   created_at: string;

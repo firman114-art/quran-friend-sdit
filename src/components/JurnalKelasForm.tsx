@@ -25,8 +25,39 @@ const JurnalKelasForm = ({ kelasId, kelasNama, guruId, onClose, onSuccess }: Pro
   const [materiPendamping, setMateriPendamping] = useState('');
   const [tugasRumah, setTugasRumah] = useState('');
   const [catatanKelas, setCatatanKelas] = useState('');
+  const [absensi, setAbsensi] = useState<string>('');
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Fetch absensi data saat tanggal berubah
+  useEffect(() => {
+    const fetchAbsensi = async () => {
+      if (!kelasId || !tanggal) return;
+      
+      // Fetch dari absensi_harian untuk tanggal dan kelas ini
+      const { data: absensiData } = await (supabase as any)
+        .from('absensi_harian')
+        .select('status')
+        .eq('kelas_id', kelasId)
+        .eq('tanggal', tanggal);
+      
+      if (absensiData && absensiData.length > 0) {
+        // Hitung ringkasan absensi
+        const counts = { hadir: 0, sakit: 0, izin: 0, alpa: 0 };
+        absensiData.forEach((a: any) => {
+          if (a.status === 'hadir') counts.hadir++;
+          else if (a.status === 'sakit') counts.sakit++;
+          else if (a.status === 'izin') counts.izin++;
+          else if (a.status === 'alpa') counts.alpa++;
+        });
+        setAbsensi(`H:${counts.hadir}, S:${counts.sakit}, I:${counts.izin}, A:${counts.alpa}`);
+      } else {
+        setAbsensi('');
+      }
+    };
+    
+    fetchAbsensi();
+  }, [kelasId, tanggal]);
 
   const handleSubmit = async () => {
     setSaving(true);
@@ -42,6 +73,7 @@ const JurnalKelasForm = ({ kelasId, kelasNama, guruId, onClose, onSuccess }: Pro
         materi_pendamping: materiPendamping || null,
         tugas_rumah: tugasRumah || null,
         catatan_kelas: catatanKelas || null,
+        absensi: absensi || null,
       } as any);
 
     setSaving(false);
@@ -84,11 +116,27 @@ const JurnalKelasForm = ({ kelasId, kelasNama, guruId, onClose, onSuccess }: Pro
           <Button variant="ghost" size="icon" onClick={onClose}><X className="w-4 h-4" /></Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label className="text-xs flex items-center gap-2">
-              <Calendar className="w-3 h-3" /> Tanggal
-            </Label>
-            <Input type="date" value={tanggal} onChange={e => setTanggal(e.target.value)} />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs flex items-center gap-2">
+                <Calendar className="w-3 h-3" /> Tanggal
+              </Label>
+              <Input type="date" value={tanggal} onChange={e => setTanggal(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs flex items-center gap-2">
+                📋 Absensi (Otomatis)
+              </Label>
+              <Input 
+                type="text" 
+                value={absensi || 'Belum ada data absensi'} 
+                readOnly
+                className="bg-secondary font-mono text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Diisi otomatis dari form absensi yang sudah diisi sebelumnya
+              </p>
+            </div>
           </div>
 
           {/* Aktivitas Pembelajaran */}

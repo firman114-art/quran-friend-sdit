@@ -236,6 +236,9 @@ const InputAbsensiSiswa = () => {
       description: `Absensi untuk ${students.length} siswa telah disimpan`,
     });
 
+    // Update rekap_jurnal_kelas dengan ringkasan absensi
+    await updateRekapJurnalAbsensi();
+
     setIsSubmitting(false);
   };
 
@@ -250,6 +253,44 @@ const InputAbsensiSiswa = () => {
       };
     });
     setAbsensiData(newAbsensiData);
+  };
+
+  // Fungsi untuk update ringkasan absensi di rekap_jurnal_kelas
+  const updateRekapJurnalAbsensi = async () => {
+    if (!selectedKelas || !tanggal) return;
+    
+    // Hitung ringkasan absensi
+    const counts = { hadir: 0, sakit: 0, izin: 0, alpa: 0 };
+    Object.values(absensiData).forEach((a) => {
+      if (a.status === 'hadir') counts.hadir++;
+      else if (a.status === 'sakit') counts.sakit++;
+      else if (a.status === 'izin') counts.izin++;
+      else if (a.status === 'alpa') counts.alpa++;
+    });
+    
+    const absensiSummary = `H:${counts.hadir}, S:${counts.sakit}, I:${counts.izin}, A:${counts.alpa}`;
+    
+    // Cek apakah sudah ada rekap untuk tanggal dan kelas ini
+    const { data: existingRekap } = await (supabase as any)
+      .from('rekap_jurnal_kelas')
+      .select('id')
+      .eq('kelas_id', selectedKelas)
+      .eq('tanggal', tanggal)
+      .maybeSingle();
+    
+    if (existingRekap) {
+      // Update absensi yang sudah ada
+      const { error } = await (supabase as any)
+        .from('rekap_jurnal_kelas')
+        .update({ absensi: absensiSummary })
+        .eq('id', existingRekap.id);
+      
+      if (error) {
+        console.error('Error updating rekap absensi:', error);
+      }
+    }
+    // Jika belum ada rekap, tidak perlu buat baru - absensi sudah tersimpan di tabel absensi_harian
+    // dan akan muncul saat guru membuat jurnal kelas
   };
 
   const countHadir = Object.values(absensiData).filter((a) => a.hadir).length;

@@ -17,6 +17,7 @@ interface JurnalRow {
   jumlah_sakit: number | null;
   jumlah_izin: number | null;
   jumlah_alpa: number | null;
+  absensi: string | null; // Format: H:25, S:2, I:1, A:0
   tugas_rumah: string | null;
   catatan_kelas: string | null;
 }
@@ -102,10 +103,7 @@ const JurnalRecap = ({ jurnals, kelasNama, onDelete }: JurnalRecapProps) => {
                     <TableHead className="border text-xs font-semibold">Tilawah</TableHead>
                     <TableHead className="border text-xs font-semibold">Tulisan</TableHead>
                     <TableHead className="border text-xs font-semibold">Materi Pendamping</TableHead>
-                    <TableHead className="border text-xs font-semibold w-20 text-center">Hadir</TableHead>
-                    <TableHead className="border text-xs font-semibold w-20 text-center">Sakit</TableHead>
-                    <TableHead className="border text-xs font-semibold w-20 text-center">Izin</TableHead>
-                    <TableHead className="border text-xs font-semibold w-20 text-center">Alpa</TableHead>
+                    <TableHead className="border text-xs font-semibold w-28 text-center">Absen</TableHead>
                     <TableHead className="border text-xs font-semibold">Tugas Rumah</TableHead>
                     <TableHead className="border text-xs font-semibold">Catatan Kelas</TableHead>
                     <TableHead className="border text-xs font-semibold w-16 text-center">Aksi</TableHead>
@@ -129,17 +127,8 @@ const JurnalRecap = ({ jurnals, kelasNama, onDelete }: JurnalRecapProps) => {
                       <TableCell className="border max-w-[120px] truncate">
                         {jurnal.materi_pendamping || '-'}
                       </TableCell>
-                      <TableCell className="border text-center">
-                        {jurnal.jumlah_hadir || 0}
-                      </TableCell>
-                      <TableCell className="border text-center">
-                        {jurnal.jumlah_sakit || 0}
-                      </TableCell>
-                      <TableCell className="border text-center">
-                        {jurnal.jumlah_izin || 0}
-                      </TableCell>
-                      <TableCell className="border text-center">
-                        {jurnal.jumlah_alpa || 0}
+                      <TableCell className="border text-center font-mono text-xs">
+                        {jurnal.absensi || `H:${jurnal.jumlah_hadir || 0}, S:${jurnal.jumlah_sakit || 0}, I:${jurnal.jumlah_izin || 0}, A:${jurnal.jumlah_alpa || 0}`}
                       </TableCell>
                       <TableCell className="border max-w-[100px] truncate">
                         {jurnal.tugas_rumah || '-'}
