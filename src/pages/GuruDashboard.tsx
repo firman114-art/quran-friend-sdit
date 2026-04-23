@@ -850,16 +850,10 @@ const GuruDashboard = () => {
                 />
 
                 {/* Rekap Jurnal Rumah - Dibuat oleh Orang Tua */}
-                {jurnalRumah.filter(j => {
-                  const student = students.find(s => s.id === j.siswa_id);
-                  return student?.kelas_id === currentKelas?.id;
-                }).length > 0 && (
+                {jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id)).length > 0 && (
                   <div className="mt-6">
                     <JurnalRumahRecap
-                      jurnals={jurnalRumah.filter(j => {
-                        const student = students.find(s => s.id === j.siswa_id);
-                        return student?.kelas_id === currentKelas?.id;
-                      })}
+                      jurnals={jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id))}
                       students={students}
                       kelasNama={currentKelas?.nama_kelas || ''}
                     />
