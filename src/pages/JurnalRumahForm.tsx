@@ -129,15 +129,17 @@ const JurnalRumahForm = () => {
       catatan: catatan || null,
     };
     
-    console.log('Submitting jurnal_rumah payload:', payload);
+    console.log('Submitting jurnal_rumah payload:', JSON.stringify(payload, null, 2));
     
     const { data, error } = await (supabase as any).from('jurnal_rumah').insert(payload).select();
     
-    console.log('Insert response:', { data, error });
-    console.log('Inserted data:', data?.[0]);
-    console.log('Hafalan surah in response:', data?.[0]?.hafalan_surah);
-    console.log('Tilawah surah in response:', data?.[0]?.tilawah_surah);
-    console.log('Jilid buku in response:', data?.[0]?.jilid_buku);
+    console.log('Insert response error:', error);
+    console.log('Insert response data length:', data?.length);
+    console.log('Insert response data[0]:', data?.[0]);
+    console.log('All keys in returned data:', data?.[0] ? Object.keys(data[0]) : 'no data');
+    console.log('Payload hafalan_surah:', payload.hafalan_surah, '| Response:', data?.[0]?.hafalan_surah);
+    console.log('Payload tilawah_surah:', payload.tilawah_surah, '| Response:', data?.[0]?.tilawah_surah);
+    console.log('Payload jilid_buku:', payload.jilid_buku, '| Response:', data?.[0]?.jilid_buku);
 
     setIsSubmitting(false);
 

@@ -87,11 +87,23 @@ interface TugasRumahTerbaru {
   kelas_id: string;
 }
 
+interface AbsensiHarian {
+  id: string;
+  siswa_id: string;
+  kelas_id: string;
+  guru_id: string;
+  tanggal: string;
+  status: 'Hadir' | 'Sakit' | 'Izin' | 'Alpha';
+  keterangan: string | null;
+  created_at: string;
+}
+
 const MuridDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [siswa, setSiswa] = useState<SiswaInfo | null>(null);
   const [records, setRecords] = useState<RecordRow[]>([]);
+  const [absensiHarian, setAbsensiHarian] = useState<AbsensiHarian[]>([]);
   const [loading, setLoading] = useState(true);
   const [classStudents, setClassStudents] = useState<ClassStudent[]>([]);
   const [jurnalKelas, setJurnalKelas] = useState<JurnalKelas[]>([]);
@@ -103,6 +115,17 @@ const MuridDetail = () => {
     const fetchData = async () => {
       const { data: siswaData } = await supabase.from('siswa').select('id, nama, kelas').eq('id', id).maybeSingle();
       const { data: recordsData } = await supabase.from('daily_records').select('*').eq('siswa_id', id).order('tanggal', { ascending: false });
+      
+      // Fetch absensi_harian untuk 1 bulan terakhir
+      const today = new Date();
+      const oneMonthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+      const { data: absensiData } = await (supabase as any)
+        .from('absensi_harian')
+        .select('*')
+        .eq('siswa_id', id)
+        .gte('tanggal', oneMonthAgo.toISOString().split('T')[0])
+        .lte('tanggal', today.toISOString().split('T')[0])
+        .order('tanggal', { ascending: true });
       
       if (siswaData) {
         setSiswa(siswaData);
@@ -147,10 +170,18 @@ const MuridDetail = () => {
         }
       }
       if (recordsData) setRecords(recordsData);
+      if (absensiData) setAbsensiHarian(absensiData as AbsensiHarian[]);
       setLoading(false);
     };
     fetchData();
-  }, [id]);
+    
+    // Polling untuk auto-update setiap 30 detik (untuk sinkron dengan absen guru)
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [id]); // Fetch data ketika id berubah atau polling
 
   // Fitur WhatsApp dinonaktifkan sementara - no_hp_ortu belum ada di database
   // const handleWhatsApp = () => {
@@ -186,7 +217,7 @@ const MuridDetail = () => {
   const lastTilawah = records.find(r => r.tilawah_surah || r.tilawah_ayat);
   const lastTilawahForCard = records.find(r => r.tilawah_surah || r.tilawah_ayat);
 
-  // Calculate monthly attendance data
+  // Calculate monthly attendance data from daily_records (legacy)
   const monthlyData = (() => {
     const monthly: { [key: string]: number } = {};
     records.forEach(r => {
@@ -202,6 +233,45 @@ const MuridDetail = () => {
       name: monthNames[month.substring(5)] || month.substring(5),
       kehadiran: count
     }));
+  })();
+
+  // Calculate daily attendance data from absensi_harian (1 month)
+  const dailyAbsensiData = (() => {
+    const daily: { [key: string]: { tanggal: string; status: string; count: number } } = {};
+    absensiHarian.forEach(a => {
+      if (!daily[a.tanggal]) {
+        daily[a.tanggal] = { tanggal: a.tanggal, status: a.status, count: 0 };
+      }
+      // Count only Hadir status as attendance
+      if (a.status === 'Hadir') {
+        daily[a.tanggal].count += 1;
+      }
+    });
+    
+    // Fill in missing dates with 0 count for the last 30 days
+    const today = new Date();
+    const result = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const dayLabel = `${date.getDate()}/${date.getMonth() + 1}`;
+      
+      if (daily[dateStr]) {
+        result.push({
+          name: dayLabel,
+          kehadiran: daily[dateStr].count > 0 ? 1 : 0,
+          status: daily[dateStr].status
+        });
+      } else {
+        result.push({
+          name: dayLabel,
+          kehadiran: 0,
+          status: '-'
+        });
+      }
+    }
+    return result;
   })();
 
   return (
@@ -301,21 +371,52 @@ const MuridDetail = () => {
             </Card>
           </div>
 
-          {monthlyData.length > 0 && (
+          {/* Grafik Kehadiran dari absensi_harian (1 bulan terakhir) */}
+          {dailyAbsensiData.length > 0 && (
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Grafik Kehadiran (6 Bulan Terakhir)</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Kehadiran 30 Hari Terakhir
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={120}>
-                  <BarChart data={monthlyData}>
+                <ResponsiveContainer width="100%" height={150}>
+                  <BarChart data={dailyAbsensiData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="kehadiran" fill="hsl(var(--primary))" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fontSize: 10 }}
+                      interval={4}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 10 }}
+                      domain={[0, 1]}
+                      ticks={[0, 1]}
+                    />
+                    <Tooltip 
+                      formatter={(value: number, name: string, props: any) => {
+                        const status = props?.payload?.status;
+                        return [value === 1 ? 'Hadir' : status === '-' ? 'Belum ada data' : status, 'Status'];
+                      }}
+                    />
+                    <Bar 
+                      dataKey="kehadiran" 
+                      fill="#22c55e"
+                      radius={[2, 2, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
+                <div className="flex items-center justify-center gap-4 mt-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-green-500 rounded"></div>
+                    <span>Hadir</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-gray-200 rounded"></div>
+                    <span>Tidak Hadir/Belum Ada Data</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}

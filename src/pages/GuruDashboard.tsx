@@ -155,19 +155,20 @@ const GuruDashboard = () => {
       // Fetch jurnal rumah for these students (optional)
       try {
         console.log('Fetching jurnal_rumah for studentIds:', studentIds);
+        console.log('First 3 studentIds:', studentIds.slice(0, 3));
         
         // Try fetching ALL jurnal_rumah first (for debugging)
-        const allJurnalRes = await supabase.from('jurnal_rumah' as any).select('count', { count: 'exact', head: true });
-        console.log('Total jurnal_rumah in database:', allJurnalRes.count, allJurnalRes.error);
+        const allJurnalRes = await (supabase as any).from('jurnal_rumah').select('*').limit(5);
+        console.log('Sample jurnal_rumah from DB:', allJurnalRes.data?.length, allJurnalRes.data?.[0]);
+        console.log('Sample siswa_id from DB:', allJurnalRes.data?.[0]?.siswa_id);
         
         // Fetch with filter
-        const jurnalRumahRes = await (supabase
-          .from('jurnal_rumah' as any)
+        const jurnalRumahRes = await (supabase as any)
+          .from('jurnal_rumah')
           .select('*')
           .in('siswa_id', studentIds)
-          .order('tanggal', { ascending: false }));
-        console.log('Jurnal Rumah response:', jurnalRumahRes);
-        console.log('Jurnal Rumah data count:', jurnalRumahRes.data?.length);
+          .order('tanggal', { ascending: false });
+        console.log('Jurnal Rumah response count:', jurnalRumahRes.data?.length);
         console.log('Jurnal Rumah error:', jurnalRumahRes.error);
         
         // Try alternative query - fetch one by one
