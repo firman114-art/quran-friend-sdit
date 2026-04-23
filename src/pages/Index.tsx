@@ -5,8 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import logoSekolah from '@/assets/logo-sekolah.jpg';
-import { Search, BookOpen, LogIn, Edit } from 'lucide-react';
-import JurnalMuridForm from '@/components/JurnalMuridForm';
+import { Search, BookOpen, LogIn } from 'lucide-react';
 import BulletinBoard from '@/components/BulletinBoard';
 
 interface SiswaResult {
@@ -21,7 +20,6 @@ const Index = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SiswaResult[]>([]);
   const [searching, setSearching] = useState(false);
-  const [showJurnalMuridForm, setShowJurnalMuridForm] = useState(false);
   const [pengumumanList, setPengumumanList] = useState<any[]>([]);
 
   useEffect(() => {
@@ -142,23 +140,11 @@ const Index = () => {
             )}
           </CardContent>
         </Card>
-        <div className="text-center">
-          <Button className="w-full gradient-hero text-primary-foreground" onClick={() => setShowJurnalMuridForm(true)}>
-            <Edit className="w-4 h-4 mr-2" /> Isi Jurnal Rumah
-          </Button>
-        </div>
-
         <BulletinBoard />
       </main>
       <footer className="text-center py-6 text-sm text-muted-foreground">
         <p className="italic">"Mencetak Generasi Qurani yang Cerdas dan Berakhlak Mulia."</p>
       </footer>
-      {showJurnalMuridForm && (
-        <JurnalMuridForm
-          onClose={() => setShowJurnalMuridForm(false)}
-          onSuccess={() => {}}
-        />
-      )}
     </div>
   );
 };
