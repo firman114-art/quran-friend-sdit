@@ -242,6 +242,7 @@ const MuridDetail = () => {
 
     const payload = {
       siswa_id: siswa.id,
+      guru_id: null, // Diisi oleh orang tua, bukan guru
       tanggal: tanggalJurnal,
       sholat_subuh: sholatSubuh,
       sholat_dzuhur: sholatDzuhur,
@@ -260,7 +261,7 @@ const MuridDetail = () => {
       catatan: catatan || null,
     };
 
-    const { error } = await supabase.from('jurnal_rumah').insert(payload);
+    const { error } = await (supabase as any).from('jurnal_rumah').insert(payload);
 
     setIsSubmittingJurnal(false);
 
