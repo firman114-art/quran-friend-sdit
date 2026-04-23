@@ -236,7 +236,6 @@ const MuridDetail = () => {
 
     const payload = {
       siswa_id: siswa.id,
-      guru_id: null, // Diisi oleh orang tua, bukan guru
       tanggal: tanggalJurnal,
       sholat_subuh: sholatSubuh,
       sholat_dzuhur: sholatDzuhur,
