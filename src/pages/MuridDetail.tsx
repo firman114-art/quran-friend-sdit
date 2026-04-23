@@ -237,17 +237,10 @@ const MuridDetail = () => {
     const payload = {
       siswa_id: siswa.id,
       tanggal: tanggalJurnal,
-      sholat_subuh: sholatSubuh,
-      sholat_dzuhur: sholatDzuhur,
-      sholat_ashar: sholatAshar,
-      sholat_maghrib: sholatMaghrib,
-      sholat_isya: sholatIsya,
-      murojaah_hafalan: murojaahHafalan || null,
-      murojaah_tilawah: murojaahTilawah || null,
-      // Legacy fields - diisi null karena tidak digunakan di form
-      hafalan_surah: null,
+      // Data dari form Murojaah dimasukkan ke legacy fields
+      hafalan_surah: murojaahHafalan ? `Murojaah: ${murojaahHafalan}` : null,
       hafalan_ayat: null,
-      tilawah_surah: null,
+      tilawah_surah: murojaahTilawah ? `Tilawah: ${murojaahTilawah}` : null,
       tilawah_ayat: null,
       jilid_buku: null,
       jilid_halaman: null,
