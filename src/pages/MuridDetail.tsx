@@ -255,13 +255,18 @@ const MuridDetail = () => {
       catatan: catatan || null,
     };
 
-    const { error } = await (supabase as any).from('jurnal_rumah').insert(payload);
+    // Debug: log payload
+    console.log('Jurnal Rumah Payload:', payload);
+
+    const { data, error } = await (supabase as any).from('jurnal_rumah').insert(payload).select();
 
     setIsSubmittingJurnal(false);
 
     if (error) {
-      alert('Gagal menyimpan jurnal rumah: ' + error.message);
+      console.error('Jurnal Rumah Error:', error);
+      alert('Gagal menyimpan jurnal rumah: ' + error.message + '\nDetails: ' + JSON.stringify(error));
     } else {
+      console.log('Jurnal Rumah Success:', data);
       alert('Jurnal rumah berhasil disimpan!');
       // Reset form
       setSholatSubuh(false);
