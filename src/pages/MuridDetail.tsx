@@ -371,59 +371,6 @@ const MuridDetail = () => {
             </Card>
           </div>
 
-          {/* Grafik Kehadiran dari absensi_harian (1 bulan terakhir) */}
-          {dailyAbsensiData.length > 0 && (
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Kehadiran 30 Hari Terakhir
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={150}>
-                  <BarChart data={dailyAbsensiData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="name" 
-                      tick={{ fontSize: 10 }}
-                      interval={4}
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 10 }}
-                      domain={[0, 1]}
-                      ticks={[0, 1]}
-                    />
-                    <Tooltip 
-                      formatter={(value: number, name: string, props: any) => {
-                        const status = props?.payload?.status;
-                        // Kapitalisasi huruf pertama untuk tampilan
-                        const displayStatus = status === '-' ? 'Belum ada data' : 
-                          status ? status.charAt(0).toUpperCase() + status.slice(1) : '-';
-                        return [value === 1 ? 'Hadir' : displayStatus, 'Status'];
-                      }}
-                    />
-                    <Bar 
-                      dataKey="kehadiran" 
-                      fill="#22c55e"
-                      radius={[2, 2, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-                <div className="flex items-center justify-center gap-4 mt-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-green-500 rounded"></div>
-                    <span>Hadir</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-gray-200 rounded"></div>
-                    <span>Tidak Hadir/Belum Ada Data</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           <div className="grid grid-cols-1 gap-3">
             {/* Jilid Terakhir */}
             {records.find(r => r.jilid_buku) && (
