@@ -2,9 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, BookOpen, Star, MessageCircle, Download, Bell, Calendar, ClipboardList } from 'lucide-react';
+import { ArrowLeft, BookOpen, Star, MessageCircle, Download, Bell, Calendar, ClipboardList, Home, Send } from 'lucide-react';
 import { getPredikatLabel } from '@/lib/data';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
@@ -110,6 +113,19 @@ const MuridDetail = () => {
   const [jurnalKelas, setJurnalKelas] = useState<JurnalKelas[]>([]);
   const [tugasRumahTerbaru, setTugasRumahTerbaru] = useState<TugasRumahTerbaru | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
+  
+  // State untuk form jurnal rumah
+  const [showJurnalForm, setShowJurnalForm] = useState(false);
+  const [isSubmittingJurnal, setIsSubmittingJurnal] = useState(false);
+  const [tanggalJurnal, setTanggalJurnal] = useState(new Date().toISOString().split('T')[0]);
+  const [sholatSubuh, setSholatSubuh] = useState(false);
+  const [sholatDzuhur, setSholatDzuhur] = useState(false);
+  const [sholatAshar, setSholatAshar] = useState(false);
+  const [sholatMaghrib, setSholatMaghrib] = useState(false);
+  const [sholatIsya, setSholatIsya] = useState(false);
+  const [murojaahHafalan, setMurojaahHafalan] = useState('');
+  const [murojaahTilawah, setMurojaahTilawah] = useState('');
+  const [catatan, setCatatan] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -209,6 +225,47 @@ const MuridDetail = () => {
     link.download = `Laporan_${siswa?.nama || 'Murid'}.jpeg`;
     link.href = canvas.toDataURL('image/jpeg', 0.9);
     link.click();
+  };
+
+  // Handler submit jurnal rumah
+  const handleSubmitJurnalRumah = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!siswa) return;
+
+    setIsSubmittingJurnal(true);
+
+    const payload = {
+      siswa_id: siswa.id,
+      tanggal: tanggalJurnal,
+      sholat_subuh: sholatSubuh,
+      sholat_dzuhur: sholatDzuhur,
+      sholat_ashar: sholatAshar,
+      sholat_maghrib: sholatMaghrib,
+      sholat_isya: sholatIsya,
+      murojaah_hafalan: murojaahHafalan || null,
+      murojaah_tilawah: murojaahTilawah || null,
+      catatan: catatan || null,
+    };
+
+    const { error } = await supabase.from('jurnal_rumah').insert(payload);
+
+    setIsSubmittingJurnal(false);
+
+    if (error) {
+      alert('Gagal menyimpan jurnal rumah: ' + error.message);
+    } else {
+      alert('Jurnal rumah berhasil disimpan!');
+      // Reset form
+      setSholatSubuh(false);
+      setSholatDzuhur(false);
+      setSholatAshar(false);
+      setSholatMaghrib(false);
+      setSholatIsya(false);
+      setMurojaahHafalan('');
+      setMurojaahTilawah('');
+      setCatatan('');
+      setShowJurnalForm(false);
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><p>Memuat...</p></div>;
@@ -523,6 +580,125 @@ const MuridDetail = () => {
             </Card>
           )}
         </div>
+
+        {/* Tombol Jurnal Rumah */}
+        <Button 
+          className="w-full bg-green-600 hover:bg-green-700 text-white" 
+          onClick={() => setShowJurnalForm(!showJurnalForm)}
+        >
+          <Home className="w-4 h-4 mr-2" />
+          {showJurnalForm ? 'Tutup Form Jurnal Rumah' : 'Isi Jurnal Rumah'}
+        </Button>
+
+        {/* Form Jurnal Rumah */}
+        {showJurnalForm && (
+          <Card className="border-2 border-green-200 bg-green-50/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Home className="w-5 h-5 text-green-600" />
+                Form Jurnal Rumah
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmitJurnalRumah} className="space-y-4">
+                {/* Tanggal */}
+                <div>
+                  <Label htmlFor="tanggal" className="text-sm">Tanggal</Label>
+                  <Input
+                    id="tanggal"
+                    type="date"
+                    value={tanggalJurnal}
+                    onChange={(e) => setTanggalJurnal(e.target.value)}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+
+                {/* Sholat 5 Waktu */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Sholat 5 Waktu</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: 'Subuh', state: sholatSubuh, setState: setSholatSubuh },
+                      { label: 'Dzuhur', state: sholatDzuhur, setState: setSholatDzuhur },
+                      { label: 'Ashar', state: sholatAshar, setState: setSholatAshar },
+                      { label: 'Maghrib', state: sholatMaghrib, setState: setSholatMaghrib },
+                      { label: 'Isya', state: sholatIsya, setState: setSholatIsya },
+                    ].map((item) => (
+                      <label key={item.label} className="flex items-center gap-2 p-2 bg-white rounded border cursor-pointer hover:bg-gray-50">
+                        <input
+                          type="checkbox"
+                          checked={item.state}
+                          onChange={(e) => item.setState(e.target.checked)}
+                          className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                        />
+                        <span className="text-sm">{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Murojaah Hafalan */}
+                <div>
+                  <Label htmlFor="murojaahHafalan" className="text-sm">Murojaah Hafalan</Label>
+                  <Textarea
+                    id="murojaahHafalan"
+                    placeholder="Contoh: Juz 30, Surat Al-Mulk Ayat 1-10"
+                    value={murojaahHafalan}
+                    onChange={(e) => setMurojaahHafalan(e.target.value)}
+                    className="mt-1"
+                    rows={2}
+                  />
+                </div>
+
+                {/* Murojaah Tilawah */}
+                <div>
+                  <Label htmlFor="murojaahTilawah" className="text-sm">Murojaah Tilawah</Label>
+                  <Textarea
+                    id="murojaahTilawah"
+                    placeholder="Contoh: Halaman 25-30, Buku Jilid 3"
+                    value={murojaahTilawah}
+                    onChange={(e) => setMurojaahTilawah(e.target.value)}
+                    className="mt-1"
+                    rows={2}
+                  />
+                </div>
+
+                {/* Catatan */}
+                <div>
+                  <Label htmlFor="catatan" className="text-sm">Catatan Orang Tua</Label>
+                  <Textarea
+                    id="catatan"
+                    placeholder="Tambahkan catatan jika ada..."
+                    value={catatan}
+                    onChange={(e) => setCatatan(e.target.value)}
+                    className="mt-1"
+                    rows={2}
+                  />
+                </div>
+
+                {/* Tombol Submit */}
+                <Button
+                  type="submit"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  disabled={isSubmittingJurnal}
+                >
+                  {isSubmittingJurnal ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Menyimpan...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Simpan Jurnal Rumah
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex gap-2">
           <Button className="flex-1" variant="outline" onClick={handleDownloadPDF}>
