@@ -556,6 +556,125 @@ const MuridDetail = () => {
             )}
           </div>
 
+          {/* Tombol Jurnal Rumah */}
+          <Button 
+            className="w-full bg-green-600 hover:bg-green-700 text-white" 
+            onClick={() => setShowJurnalForm(!showJurnalForm)}
+          >
+            <Home className="w-4 h-4 mr-2" />
+            {showJurnalForm ? 'Tutup Form Jurnal Rumah' : 'Isi Jurnal Rumah'}
+          </Button>
+
+          {/* Form Jurnal Rumah */}
+          {showJurnalForm && (
+            <Card className="border-2 border-green-200 bg-green-50/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Home className="w-5 h-5 text-green-600" />
+                  Form Jurnal Rumah
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmitJurnalRumah} className="space-y-4">
+                  {/* Tanggal */}
+                  <div>
+                    <Label htmlFor="tanggal" className="text-sm">Tanggal</Label>
+                    <Input
+                      id="tanggal"
+                      type="date"
+                      value={tanggalJurnal}
+                      onChange={(e) => setTanggalJurnal(e.target.value)}
+                      required
+                      className="mt-1"
+                    />
+                  </div>
+
+                  {/* Sholat 5 Waktu */}
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Sholat 5 Waktu</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { label: 'Subuh', state: sholatSubuh, setState: setSholatSubuh },
+                        { label: 'Dzuhur', state: sholatDzuhur, setState: setSholatDzuhur },
+                        { label: 'Ashar', state: sholatAshar, setState: setSholatAshar },
+                        { label: 'Maghrib', state: sholatMaghrib, setState: setSholatMaghrib },
+                        { label: 'Isya', state: sholatIsya, setState: setSholatIsya },
+                      ].map((item) => (
+                        <label key={item.label} className="flex items-center gap-2 p-2 bg-white rounded border cursor-pointer hover:bg-gray-50">
+                          <input
+                            type="checkbox"
+                            checked={item.state}
+                            onChange={(e) => item.setState(e.target.checked)}
+                            className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                          />
+                          <span className="text-sm">{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Murojaah Hafalan */}
+                  <div>
+                    <Label htmlFor="murojaahHafalan" className="text-sm">Murojaah Hafalan</Label>
+                    <Textarea
+                      id="murojaahHafalan"
+                      placeholder="Contoh: Juz 30, Surat Al-Mulk Ayat 1-10"
+                      value={murojaahHafalan}
+                      onChange={(e) => setMurojaahHafalan(e.target.value)}
+                      className="mt-1"
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Murojaah Tilawah */}
+                  <div>
+                    <Label htmlFor="murojaahTilawah" className="text-sm">Murojaah Tilawah</Label>
+                    <Textarea
+                      id="murojaahTilawah"
+                      placeholder="Contoh: Halaman 25-30, Buku Jilid 3"
+                      value={murojaahTilawah}
+                      onChange={(e) => setMurojaahTilawah(e.target.value)}
+                      className="mt-1"
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Catatan */}
+                  <div>
+                    <Label htmlFor="catatan" className="text-sm">Catatan Orang Tua</Label>
+                    <Textarea
+                      id="catatan"
+                      placeholder="Tambahkan catatan jika ada..."
+                      value={catatan}
+                      onChange={(e) => setCatatan(e.target.value)}
+                      className="mt-1"
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Tombol Submit */}
+                  <Button
+                    type="submit"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    disabled={isSubmittingJurnal}
+                  >
+                    {isSubmittingJurnal ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Simpan Jurnal Rumah
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
           {classStudents.length > 0 && (
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
@@ -580,125 +699,6 @@ const MuridDetail = () => {
             </Card>
           )}
         </div>
-
-        {/* Tombol Jurnal Rumah */}
-        <Button 
-          className="w-full bg-green-600 hover:bg-green-700 text-white" 
-          onClick={() => setShowJurnalForm(!showJurnalForm)}
-        >
-          <Home className="w-4 h-4 mr-2" />
-          {showJurnalForm ? 'Tutup Form Jurnal Rumah' : 'Isi Jurnal Rumah'}
-        </Button>
-
-        {/* Form Jurnal Rumah */}
-        {showJurnalForm && (
-          <Card className="border-2 border-green-200 bg-green-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Home className="w-5 h-5 text-green-600" />
-                Form Jurnal Rumah
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmitJurnalRumah} className="space-y-4">
-                {/* Tanggal */}
-                <div>
-                  <Label htmlFor="tanggal" className="text-sm">Tanggal</Label>
-                  <Input
-                    id="tanggal"
-                    type="date"
-                    value={tanggalJurnal}
-                    onChange={(e) => setTanggalJurnal(e.target.value)}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-
-                {/* Sholat 5 Waktu */}
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Sholat 5 Waktu</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { label: 'Subuh', state: sholatSubuh, setState: setSholatSubuh },
-                      { label: 'Dzuhur', state: sholatDzuhur, setState: setSholatDzuhur },
-                      { label: 'Ashar', state: sholatAshar, setState: setSholatAshar },
-                      { label: 'Maghrib', state: sholatMaghrib, setState: setSholatMaghrib },
-                      { label: 'Isya', state: sholatIsya, setState: setSholatIsya },
-                    ].map((item) => (
-                      <label key={item.label} className="flex items-center gap-2 p-2 bg-white rounded border cursor-pointer hover:bg-gray-50">
-                        <input
-                          type="checkbox"
-                          checked={item.state}
-                          onChange={(e) => item.setState(e.target.checked)}
-                          className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-                        />
-                        <span className="text-sm">{item.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Murojaah Hafalan */}
-                <div>
-                  <Label htmlFor="murojaahHafalan" className="text-sm">Murojaah Hafalan</Label>
-                  <Textarea
-                    id="murojaahHafalan"
-                    placeholder="Contoh: Juz 30, Surat Al-Mulk Ayat 1-10"
-                    value={murojaahHafalan}
-                    onChange={(e) => setMurojaahHafalan(e.target.value)}
-                    className="mt-1"
-                    rows={2}
-                  />
-                </div>
-
-                {/* Murojaah Tilawah */}
-                <div>
-                  <Label htmlFor="murojaahTilawah" className="text-sm">Murojaah Tilawah</Label>
-                  <Textarea
-                    id="murojaahTilawah"
-                    placeholder="Contoh: Halaman 25-30, Buku Jilid 3"
-                    value={murojaahTilawah}
-                    onChange={(e) => setMurojaahTilawah(e.target.value)}
-                    className="mt-1"
-                    rows={2}
-                  />
-                </div>
-
-                {/* Catatan */}
-                <div>
-                  <Label htmlFor="catatan" className="text-sm">Catatan Orang Tua</Label>
-                  <Textarea
-                    id="catatan"
-                    placeholder="Tambahkan catatan jika ada..."
-                    value={catatan}
-                    onChange={(e) => setCatatan(e.target.value)}
-                    className="mt-1"
-                    rows={2}
-                  />
-                </div>
-
-                {/* Tombol Submit */}
-                <Button
-                  type="submit"
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
-                  disabled={isSubmittingJurnal}
-                >
-                  {isSubmittingJurnal ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Menyimpan...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Simpan Jurnal Rumah
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        )}
 
         <div className="flex gap-2">
           <Button className="flex-1" variant="outline" onClick={handleDownloadPDF}>
