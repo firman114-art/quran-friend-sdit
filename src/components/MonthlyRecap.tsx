@@ -32,13 +32,20 @@ interface RecordRow {
   catatan_guru: string | null;
 }
 
+interface AbsensiRecord {
+  siswa_id: string;
+  tanggal: string;
+  status: 'hadir' | 'sakit' | 'izin' | 'alpa';
+}
+
 interface Props {
   students: SiswaRow[];
   records: RecordRow[];
+  absensiRecords?: AbsensiRecord[]; // Data dari absensi_harian (prioritas)
   kelasNama: string;
 }
 
-const MonthlyRecap = ({ students, records, kelasNama }: Props) => {
+const MonthlyRecap = ({ students, records, absensiRecords, kelasNama }: Props) => {
   const [periode, setPeriode] = useState<'bulan' | 'semester'>('bulan');
   const [bulan, setBulan] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [semester, setSemester] = useState('ganjil');
@@ -68,7 +75,18 @@ const MonthlyRecap = ({ students, records, kelasNama }: Props) => {
 
   const studentRecaps = students.map(s => {
     const sRecords = filteredRecords.filter(r => r.siswa_id === s.id);
-    const kehadiran = new Set(sRecords.map(r => r.tanggal)).size;
+    
+    // Prioritaskan data dari absensi_harian jika tersedia
+    let kehadiran = 0;
+    if (absensiRecords && absensiRecords.length > 0) {
+      // Hitung kehadiran dari absensi_harian (status = 'hadir')
+      const sAbsensi = absensiRecords.filter(a => a.siswa_id === s.id);
+      kehadiran = sAbsensi.filter(a => a.status === 'hadir').length;
+    } else {
+      // Fallback ke daily_records (sistem lama)
+      kehadiran = new Set(sRecords.map(r => r.tanggal)).size;
+    }
+    
     const persentase = totalPertemuan > 0 ? Math.round((kehadiran / totalPertemuan) * 100) : 0;
     const lastHafalan = sRecords.find(r => r.hafalan_surah);
     const lastTilawah = sRecords.find(r => r.tilawah_surah || r.tilawah_ayat);

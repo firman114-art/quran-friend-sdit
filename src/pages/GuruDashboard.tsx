@@ -59,6 +59,12 @@ interface RecordRow {
   catatan_guru: string | null;
 }
 
+interface AbsensiRecord {
+  siswa_id: string;
+  tanggal: string;
+  status: 'hadir' | 'sakit' | 'izin' | 'alpa';
+}
+
 interface JurnalRow {
   id: string;
   guru_id: string;
@@ -86,6 +92,7 @@ const GuruDashboard = () => {
   const [selectedKelas, setSelectedKelas] = useState<string>('');
   const [students, setStudents] = useState<SiswaRow[]>([]);
   const [records, setRecords] = useState<RecordRow[]>([]);
+  const [absensiRecords, setAbsensiRecords] = useState<AbsensiRecord[]>([]);
   const [jurnals, setJurnals] = useState<JurnalRow[]>([]);
   const [jurnalRumah, setJurnalRumah] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -146,6 +153,20 @@ const GuruDashboard = () => {
         .in('siswa_id', studentIds)
         .order('tanggal', { ascending: false });
       console.log('Records for class:', recordsRes.data?.length, recordsRes.error);
+      
+      // Fetch absensi dari absensi_harian (prioritas baru)
+      const absensiRes = await (supabase as any)
+        .from('absensi_harian')
+        .select('siswa_id, tanggal, status')
+        .in('siswa_id', studentIds)
+        .order('tanggal', { ascending: false });
+      console.log('Absensi harian for class:', absensiRes.data?.length, absensiRes.error);
+      
+      if (absensiRes.data) {
+        setAbsensiRecords(absensiRes.data as AbsensiRecord[]);
+      } else {
+        setAbsensiRecords([]);
+      }
       
       if (recordsRes.data) setRecords(recordsRes.data as any);
       else if (recordsRes.error) {
@@ -463,6 +484,7 @@ const GuruDashboard = () => {
               <MonthlyRecap
                 students={filteredStudents}
                 records={kelasRecords}
+                absensiRecords={absensiRecords}
                 kelasNama={currentKelas.nama_kelas}
               />
             )}

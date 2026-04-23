@@ -87,11 +87,23 @@ interface TugasRumahTerbaru {
   kelas_id: string;
 }
 
+interface AbsensiHarian {
+  id: string;
+  siswa_id: string;
+  kelas_id: string;
+  guru_id: string;
+  tanggal: string;
+  status: 'hadir' | 'sakit' | 'izin' | 'alpa';
+  keterangan: string | null;
+  created_at: string;
+}
+
 const MuridDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [siswa, setSiswa] = useState<SiswaInfo | null>(null);
   const [records, setRecords] = useState<RecordRow[]>([]);
+  const [absensiHarian, setAbsensiHarian] = useState<AbsensiHarian[]>([]);
   const [loading, setLoading] = useState(true);
   const [classStudents, setClassStudents] = useState<ClassStudent[]>([]);
   const [jurnalKelas, setJurnalKelas] = useState<JurnalKelas[]>([]);
@@ -103,6 +115,20 @@ const MuridDetail = () => {
     const fetchData = async () => {
       const { data: siswaData } = await supabase.from('siswa').select('id, nama, kelas').eq('id', id).maybeSingle();
       const { data: recordsData } = await supabase.from('daily_records').select('*').eq('siswa_id', id).order('tanggal', { ascending: false });
+      
+      // Fetch data absensi dari absensi_harian (prioritas baru)
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      const { data: absensiData } = await (supabase as any)
+        .from('absensi_harian')
+        .select('*')
+        .eq('siswa_id', id)
+        .gte('tanggal', oneMonthAgo.toISOString().split('T')[0])
+        .order('tanggal', { ascending: false });
+      
+      if (absensiData) {
+        setAbsensiHarian(absensiData as AbsensiHarian[]);
+      }
       
       if (siswaData) {
         setSiswa(siswaData);
@@ -150,6 +176,10 @@ const MuridDetail = () => {
       setLoading(false);
     };
     fetchData();
+    
+    // Polling untuk auto-update setiap 30 detik
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, [id]);
 
   // Fitur WhatsApp dinonaktifkan sementara - no_hp_ortu belum ada di database
@@ -187,7 +217,38 @@ const MuridDetail = () => {
   const lastTilawahForCard = records.find(r => r.tilawah_surah || r.tilawah_ayat);
 
   // Calculate monthly attendance data from daily_records (legacy)
+  // Hitung kehadiran dari absensi_harian (prioritas) atau daily_records (fallback)
+  const getKehadiranCount = () => {
+    if (absensiHarian.length > 0) {
+      // Hitung dari absensi_harian - hanya yang statusnya 'hadir'
+      return absensiHarian.filter(a => a.status === 'hadir').length;
+    }
+    // Fallback ke daily_records
+    return records.length;
+  };
+
   const monthlyData = (() => {
+    // Prioritaskan data dari absensi_harian
+    if (absensiHarian.length > 0) {
+      const monthly: { [key: string]: number } = {};
+      absensiHarian
+        .filter(a => a.status === 'hadir')
+        .forEach(a => {
+          const month = a.tanggal.substring(0, 7); // YYYY-MM
+          monthly[month] = (monthly[month] || 0) + 1;
+        });
+      const sortedMonths = Object.entries(monthly).sort((a, b) => a[0].localeCompare(b[0]));
+      const monthNames: { [key: string]: string } = {
+        '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'Mei', '06': 'Jun',
+        '07': 'Jul', '08': 'Agu', '09': 'Sep', '10': 'Okt', '11': 'Nov', '12': 'Des'
+      };
+      return sortedMonths.slice(-6).map(([month, count]) => ({
+        name: monthNames[month.substring(5)] || month.substring(5),
+        kehadiran: count
+      }));
+    }
+    
+    // Fallback ke daily_records
     const monthly: { [key: string]: number } = {};
     records.forEach(r => {
       const month = r.tanggal.substring(0, 7); // YYYY-MM
@@ -281,8 +342,13 @@ const MuridDetail = () => {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4 text-center">
                 <BookOpen className="w-6 h-6 mx-auto text-primary mb-1" />
-                <p className="text-2xl font-bold">{records.length}</p>
-                <p className="text-xs text-muted-foreground">Kehadiran</p>
+                <p className="text-2xl font-bold">{getKehadiranCount()}</p>
+                <p className="text-xs text-muted-foreground">
+                  Kehadiran
+                  {absensiHarian.length > 0 && (
+                    <span className="block text-[10px] text-green-600">(dari absensi)</span>
+                  )}
+                </p>
               </CardContent>
             </Card>
             <Card className="border-0 shadow-sm">
@@ -383,21 +449,6 @@ const MuridDetail = () => {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">📝 Catatan Guru Terakhir</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  {(() => {
-                    const r = records.find(rec => rec.catatan_guru);
-                    const jurnalHariIni = r ? jurnalKelas.find(j => j.tanggal === r.tanggal) : null;
-                    return r ? (
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">{r.tanggal}</p>
-                        <p className="text-sm italic text-muted-foreground">{r.catatan_guru}</p>
-                        {jurnalHariIni?.tugas_rumah && (
-                          <p className="text-xs text-amber-600 font-medium mt-1">📋 Tugas: {jurnalHariIni.tugas_rumah}</p>
-                        )}
-                      </div>
-                    ) : null;
-                  })()}
-                </CardContent>
               </Card>
             )}
 

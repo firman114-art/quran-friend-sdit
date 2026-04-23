@@ -239,6 +239,9 @@ const InputAbsensiSiswa = () => {
     // Update rekap_jurnal_kelas dengan ringkasan absensi
     await updateRekapJurnalAbsensi();
 
+    // Sinkronisasi ke daily_records untuk kompatibilitas dengan sistem lama
+    await syncToDailyRecords();
+
     setIsSubmitting(false);
   };
 
@@ -291,6 +294,54 @@ const InputAbsensiSiswa = () => {
     }
     // Jika belum ada rekap, tidak perlu buat baru - absensi sudah tersimpan di tabel absensi_harian
     // dan akan muncul saat guru membuat jurnal kelas
+  };
+
+  // Fungsi untuk sinkronisasi kehadiran ke daily_records (sistem lama)
+  const syncToDailyRecords = async () => {
+    if (!selectedKelas || !tanggal || !guruData) return;
+    
+    // Ambil semua siswa yang hadir (status = 'hadir')
+    const hadirRecords = Object.values(absensiData).filter((a) => a.status === 'hadir');
+    
+    if (hadirRecords.length === 0) return;
+    
+    // Hapus data lama di daily_records untuk tanggal ini (untuk siswa di kelas ini)
+    // Kita perlu cari siswa_id yang termasuk kelas ini
+    const siswaIds = hadirRecords.map((r) => r.siswa_id);
+    
+    // Hapus existing records untuk tanggal ini
+    await (supabase as any)
+      .from('daily_records')
+      .delete()
+      .in('siswa_id', siswaIds)
+      .eq('tanggal', tanggal);
+    
+    // Insert baru untuk siswa yang hadir
+    const dailyRecords = hadirRecords.map((record) => ({
+      siswa_id: record.siswa_id,
+      tanggal: tanggal,
+      guru_id: guruData.id,
+      hafalan_surah: null,
+      hafalan_ayat: null,
+      hafalan_predikat: null,
+      tilawah_surah: null,
+      tilawah_ayat: null,
+      tilawah_predikat: null,
+      jilid_buku: null,
+      jilid_halaman: null,
+      jilid_predikat: null,
+      catatan_guru: `Hadir - absensi dari form ceklis`,
+    }));
+    
+    const { error } = await (supabase as any)
+      .from('daily_records')
+      .insert(dailyRecords);
+    
+    if (error) {
+      console.error('Error syncing to daily_records:', error);
+    } else {
+      console.log(`Synced ${dailyRecords.length} records to daily_records`);
+    }
   };
 
   const countHadir = Object.values(absensiData).filter((a) => a.hadir).length;
