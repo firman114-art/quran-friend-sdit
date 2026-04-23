@@ -14,6 +14,7 @@ interface SiswaInfo {
   id: string;
   nama: string;
   kelas: string;
+  kelas_id: string | null;
 }
 
 interface RecordRow {
@@ -113,7 +114,7 @@ const MuridDetail = () => {
   useEffect(() => {
     if (!id) return;
     const fetchData = async () => {
-      const { data: siswaData } = await supabase.from('siswa').select('id, nama, kelas').eq('id', id).maybeSingle();
+      const { data: siswaData } = await supabase.from('siswa').select('id, nama, kelas, kelas_id').eq('id', id).maybeSingle();
       const { data: recordsData } = await supabase.from('daily_records').select('*').eq('siswa_id', id).order('tanggal', { ascending: false });
       
       // Fetch data absensi dari absensi_harian (prioritas baru)
@@ -132,15 +133,16 @@ const MuridDetail = () => {
       
       if (siswaData) {
         setSiswa(siswaData);
-        // Fetch jurnal_kelas for this class to get tugas_rumah
-        const { data: jurnalData } = await supabase.from('jurnal_kelas' as any).select('id, kelas_id, tanggal, tugas_rumah').eq('kelas_id', siswaData.kelas);
+        // Fetch jurnal_kelas for this class to get tugas_rumah (gunakan kelas_id UUID)
+        const siswaKelasId = siswaData.kelas_id || siswaData.kelas; // fallback ke nama kelas jika kelas_id null
+        const { data: jurnalData } = await supabase.from('jurnal_kelas' as any).select('id, kelas_id, tanggal, tugas_rumah').eq('kelas_id', siswaKelasId);
         if (jurnalData) setJurnalKelas(jurnalData as any);
         
-        // Fetch tugas rumah terbaru untuk kelas ini
+        // Fetch tugas rumah terbaru untuk kelas ini (gunakan kelas_id UUID)
         const { data: tugasData } = await supabase
           .from('jurnal_kelas' as any)
           .select('id, tugas_rumah, tanggal, kelas_id')
-          .eq('kelas_id', siswaData.kelas)
+          .eq('kelas_id', siswaKelasId)
           .not('tugas_rumah', 'is', null)
           .not('tugas_rumah', 'eq', '')
           .order('tanggal', { ascending: false })
