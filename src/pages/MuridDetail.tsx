@@ -125,6 +125,12 @@ const MuridDetail = () => {
   const [sholatIsya, setSholatIsya] = useState(false);
   const [murojaahHafalan, setMurojaahHafalan] = useState('');
   const [murojaahTilawah, setMurojaahTilawah] = useState('');
+  const [hafalanSurah, setHafalanSurah] = useState('');
+  const [hafalanAyat, setHafalanAyat] = useState('');
+  const [tilawahSurah, setTilawahSurah] = useState('');
+  const [tilawahAyat, setTilawahAyat] = useState('');
+  const [jilidBuku, setJilidBuku] = useState('');
+  const [jilidHalaman, setJilidHalaman] = useState('');
   const [catatan, setCatatan] = useState('');
 
   useEffect(() => {
@@ -244,6 +250,13 @@ const MuridDetail = () => {
       sholat_isya: sholatIsya,
       murojaah_hafalan: murojaahHafalan || null,
       murojaah_tilawah: murojaahTilawah || null,
+      // Data hafalan (legacy fields untuk compatibility)
+      hafalan_surah: hafalanSurah || null,
+      hafalan_ayat: hafalanAyat || null,
+      tilawah_surah: tilawahSurah || null,
+      tilawah_ayat: tilawahAyat || null,
+      jilid_buku: jilidBuku || null,
+      jilid_halaman: jilidHalaman ? parseInt(jilidHalaman) : null,
       catatan: catatan || null,
     };
 
@@ -263,6 +276,12 @@ const MuridDetail = () => {
       setSholatIsya(false);
       setMurojaahHafalan('');
       setMurojaahTilawah('');
+      setHafalanSurah('');
+      setHafalanAyat('');
+      setTilawahSurah('');
+      setTilawahAyat('');
+      setJilidBuku('');
+      setJilidHalaman('');
       setCatatan('');
       setShowJurnalForm(false);
     }
@@ -637,6 +656,79 @@ const MuridDetail = () => {
                       className="mt-1"
                       rows={2}
                     />
+                  </div>
+
+                  {/* Hafalan Surah */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="hafalanSurah" className="text-sm">Hafalan Surah</Label>
+                      <Input
+                        id="hafalanSurah"
+                        placeholder="Contoh: Al-Mulk"
+                        value={hafalanSurah}
+                        onChange={(e) => setHafalanSurah(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="hafalanAyat" className="text-sm">Ayat</Label>
+                      <Input
+                        id="hafalanAyat"
+                        placeholder="Contoh: 1-10"
+                        value={hafalanAyat}
+                        onChange={(e) => setHafalanAyat(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Tilawah Surah */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="tilawahSurah" className="text-sm">Tilawah Surah</Label>
+                      <Input
+                        id="tilawahSurah"
+                        placeholder="Contoh: Yasin"
+                        value={tilawahSurah}
+                        onChange={(e) => setTilawahSurah(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="tilawahAyat" className="text-sm">Ayat</Label>
+                      <Input
+                        id="tilawahAyat"
+                        placeholder="Contoh: 1-20"
+                        value={tilawahAyat}
+                        onChange={(e) => setTilawahAyat(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Jilid Buku */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="jilidBuku" className="text-sm">Jilid Buku</Label>
+                      <Input
+                        id="jilidBuku"
+                        placeholder="Contoh: Jilid 3"
+                        value={jilidBuku}
+                        onChange={(e) => setJilidBuku(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="jilidHalaman" className="text-sm">Halaman</Label>
+                      <Input
+                        id="jilidHalaman"
+                        type="number"
+                        placeholder="Contoh: 25"
+                        value={jilidHalaman}
+                        onChange={(e) => setJilidHalaman(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
                   </div>
 
                   {/* Catatan */}
