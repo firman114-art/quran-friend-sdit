@@ -74,6 +74,9 @@ interface ClassStudent {
   id: string;
   nama: string;
   mumtazCount: number;
+  hafalanMumtaz: number;
+  tilawahMumtaz: number;
+  jilidMumtaz: number;
   totalRecords: number;
 }
 
@@ -175,15 +178,31 @@ const MuridDetail = () => {
           const studentIds = classStudentsData.map(s => s.id);
           const { data: allRecords } = await supabase.from('daily_records').select('*').in('siswa_id', studentIds);
           
-          // Calculate performance for each student
+          // Calculate performance for each student with monthly reset
+          const now = new Date();
+          const currentMonth = now.getMonth();
+          const currentYear = now.getFullYear();
+          
           const studentsWithStats = classStudentsData.map(s => {
             const studentRecords = allRecords?.filter(r => r.siswa_id === s.id) || [];
-            const mumtazCount = studentRecords.filter(r => r.hafalan_predikat === 'A' || r.hafalan_predikat === 'Mumtaz').length;
+            // Filter untuk bulan ini saja (reset bulanan)
+            const monthlyRecords = studentRecords.filter(r => {
+              const recordDate = new Date(r.tanggal);
+              return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+            });
+            // Hitung Mumtaz per kategori secara individu
+            const hafalanMumtaz = monthlyRecords.filter(r => r.hafalan_predikat === 'A' || r.hafalan_predikat === 'Mumtaz').length;
+            const tilawahMumtaz = monthlyRecords.filter(r => r.tilawah_predikat === 'A' || r.tilawah_predikat === 'Mumtaz').length;
+            const jilidMumtaz = monthlyRecords.filter(r => r.jilid_predikat === 'A' || r.jilid_predikat === 'Mumtaz').length;
+            const totalMumtaz = hafalanMumtaz + tilawahMumtaz + jilidMumtaz;
             return {
               id: s.id,
               nama: s.nama,
-              mumtazCount,
-              totalRecords: studentRecords.length
+              mumtazCount: totalMumtaz,
+              hafalanMumtaz,
+              tilawahMumtaz,
+              jilidMumtaz,
+              totalRecords: monthlyRecords.length
             };
           }).sort((a, b) => b.mumtazCount - a.mumtazCount).slice(0, 3); // Top 3
           
@@ -418,15 +437,34 @@ const MuridDetail = () => {
             <Card className="border-0 shadow-sm">
               <CardContent className="p-4 text-center">
                 <Star className="w-6 h-6 mx-auto text-accent mb-1" />
-                <p className="text-2xl font-bold">{
-                  records.reduce((count, r) => {
-                    const hafalanMumtaz = r.hafalan_predikat === 'A' || r.hafalan_predikat === 'Mumtaz' ? 1 : 0;
-                    const tilawahMumtaz = r.tilawah_predikat === 'A' || r.tilawah_predikat === 'Mumtaz' ? 1 : 0;
-                    const jilidMumtaz = r.jilid_predikat === 'A' || r.jilid_predikat === 'Mumtaz' ? 1 : 0;
-                    return count + hafalanMumtaz + tilawahMumtaz + jilidMumtaz;
-                  }, 0)
-                }</p>
-                <p className="text-xs text-muted-foreground">Mumtaz</p>
+                {(() => {
+                  // Filter records untuk bulan ini saja (reset bulanan)
+                  const now = new Date();
+                  const currentMonth = now.getMonth();
+                  const currentYear = now.getFullYear();
+                  const monthlyRecords = records.filter(r => {
+                    const recordDate = new Date(r.tanggal);
+                    return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+                  });
+                  
+                  // Hitung Mumtaz per kategori secara individu
+                  const hafalanMumtaz = monthlyRecords.filter(r => r.hafalan_predikat === 'A' || r.hafalan_predikat === 'Mumtaz').length;
+                  const tilawahMumtaz = monthlyRecords.filter(r => r.tilawah_predikat === 'A' || r.tilawah_predikat === 'Mumtaz').length;
+                  const jilidMumtaz = monthlyRecords.filter(r => r.jilid_predikat === 'A' || r.jilid_predikat === 'Mumtaz').length;
+                  const totalMumtaz = hafalanMumtaz + tilawahMumtaz + jilidMumtaz;
+                  
+                  return (
+                    <>
+                      <p className="text-2xl font-bold">{totalMumtaz}</p>
+                      <p className="text-xs text-muted-foreground">Mumtaz Bulan Ini</p>
+                      <div className="mt-2 text-[10px] text-muted-foreground space-y-1">
+                        <p>🕌 Hafalan: {hafalanMumtaz}</p>
+                        <p>📖 Tilawah: {tilawahMumtaz}</p>
+                        <p>📕 Jilid: {jilidMumtaz}</p>
+                      </div>
+                    </>
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>
@@ -684,7 +722,7 @@ const MuridDetail = () => {
           {classStudents.length > 0 && (
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">🏆 Siswa Terbaik di Kelas {siswa?.kelas}</CardTitle>
+                <CardTitle className="text-base">🏆 Siswa Terbaik Bulan Ini - Kelas {siswa?.kelas}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {classStudents.map((s, index) => (
@@ -697,6 +735,9 @@ const MuridDetail = () => {
                     </div>
                     <div className="text-right">
                       <span className="text-xs font-bold text-primary">{s.mumtazCount} Mumtaz</span>
+                      <span className="text-[10px] text-muted-foreground block">
+                        🕌{s.hafalanMumtaz} 📖{s.tilawahMumtaz} 📕{s.jilidMumtaz}
+                      </span>
                       <span className="text-xs text-muted-foreground block">{s.totalRecords} pertemuan</span>
                     </div>
                   </div>
