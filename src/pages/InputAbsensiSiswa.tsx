@@ -732,12 +732,12 @@ const InputAbsensiSiswa = () => {
 
               <div className="space-y-2">
                 <Label>Bulan (Opsional)</Label>
-                <Select value={selectedBulan} onValueChange={setSelectedBulan}>
+                <Select value={selectedBulan || "all"} onValueChange={(val) => setSelectedBulan(val === "all" ? "" : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Semua Bulan" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Semua Bulan</SelectItem>
+                    <SelectItem value="all">Semua Bulan</SelectItem>
                     <SelectItem value="1">Januari</SelectItem>
                     <SelectItem value="2">Februari</SelectItem>
                     <SelectItem value="3">Maret</SelectItem>
