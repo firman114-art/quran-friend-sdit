@@ -578,89 +578,73 @@ const GuruDashboard = () => {
                                 <Table className="border-0">
                                   <TableHeader className="sticky top-0 z-10">
                                     <TableRow className="bg-gray-100">
+                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">No</TableHead>
                                       <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Tanggal</TableHead>
-                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Nama Murid</TableHead>
-                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Hafalan</TableHead>
-                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Tilawah</TableHead>
-                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Jilid</TableHead>
-                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Catatan Guru</TableHead>
+                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Jam</TableHead>
+                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Materi/Kegiatan</TableHead>
+                                      <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Tugas/Catatan</TableHead>
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
-                                    {kelasRecords.map((record, index) => {
-                                      const student = students.find(s => s.id === record.siswa_id);
-                                      const getPredikatBadge = (predikat: string | null) => {
-                                        if (!predikat) return null;
-                                        const lowerPredikat = predikat.toLowerCase();
-                                        if (lowerPredikat.includes('mumtaz') || lowerPredikat === 'a') {
-                                          return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700 ml-1">{predikat}</span>;
-                                        } else if (lowerPredikat.includes('maqbul') || lowerPredikat === 'b') {
-                                          return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700 ml-1">{predikat}</span>;
-                                        } else if (lowerPredikat.includes('jayyid') || lowerPredikat === 'c') {
-                                          return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700 ml-1">{predikat}</span>;
-                                        }
-                                        return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-700 ml-1">{predikat}</span>;
-                                      };
-                                      return (
-                                        <TableRow key={record.id} className={`text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-blue-50/50 transition-colors`}>
-                                          <TableCell className="py-3 px-4 whitespace-nowrap text-xs">
-                                            {new Date(record.tanggal).toLocaleDateString('id-ID')}
-                                          </TableCell>
-                                          <TableCell className="py-3 px-4 font-medium">
-                                            {student?.nama || 'Unknown'}
-                                          </TableCell>
-                                          <TableCell className="py-3 px-4">
-                                            {record.hafalan_surah ? (
-                                              <div className="leading-relaxed">
-                                                <span className="font-medium">{record.hafalan_surah}</span>
-                                                {getPredikatBadge(record.hafalan_predikat)}
-                                              </div>
-                                            ) : <span className="text-gray-400">-</span>}
-                                          </TableCell>
-                                          <TableCell className="py-3 px-4">
-                                            {(record.tilawah_surah || record.tilawah_ayat) ? (
-                                              <div className="leading-relaxed">
-                                                <div>
-                                                  <span className="font-medium">{record.tilawah_surah || '-'}</span>
-                                                  {record.tilawah_ayat && <span className="text-gray-600"> ayat {record.tilawah_ayat}</span>}
-                                                  {getPredikatBadge(record.tilawah_predikat)}
-                                                </div>
-                                                {(record.tilawah_kesalahan_tajwid || record.tilawah_kesalahan_kelancaran || record.tilawah_kesalahan_fasohah) && (
-                                                  <div className="text-xs text-gray-500 mt-1 space-x-2">
-                                                    <span>Tajwid: {record.tilawah_kesalahan_tajwid || 0}</span>
-                                                    <span>Kelancaran: {record.tilawah_kesalahan_kelancaran || 0}</span>
-                                                    <span>Fasohah: {record.tilawah_kesalahan_fasohah || 0}</span>
-                                                  </div>
-                                                )}
-                                              </div>
-                                            ) : <span className="text-gray-400">-</span>}
-                                          </TableCell>
-                                          <TableCell className="py-3 px-4">
-                                            {record.jilid_buku ? (
-                                              <div className="leading-relaxed">
-                                                <div>
-                                                  <span className="font-medium">{record.jilid_buku}</span>
-                                                  <span className="text-gray-600"> Hal.{record.jilid_halaman}</span>
-                                                  {getPredikatBadge(record.jilid_predikat)}
-                                                </div>
-                                                {(record.jilid_kesalahan_tajwid || record.jilid_kesalahan_kelancaran || record.jilid_kesalahan_fasohah) && (
-                                                  <div className="text-xs text-gray-500 mt-1 space-x-2">
-                                                    <span>Tajwid: {record.jilid_kesalahan_tajwid || 0}</span>
-                                                    <span>Kelancaran: {record.jilid_kesalahan_kelancaran || 0}</span>
-                                                    <span>Fasohah: {record.jilid_kesalahan_fasohah || 0}</span>
-                                                  </div>
-                                                )}
-                                              </div>
-                                            ) : <span className="text-gray-400">-</span>}
-                                          </TableCell>
-                                          <TableCell className="py-3 px-4 max-w-[200px]">
-                                            {record.catatan_guru ? (
-                                              <p className="text-sm leading-relaxed text-gray-700">{record.catatan_guru}</p>
-                                            ) : <span className="text-gray-400">-</span>}
-                                          </TableCell>
-                                        </TableRow>
-                                      );
-                                    })}
+                                    {kelasRecords.map((record, index) => (
+                                      <TableRow key={record.id} className={`text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-blue-50/50 transition-colors`}>
+                                        <TableCell className="py-3 px-4 text-center font-medium">{index + 1}</TableCell>
+                                        <TableCell className="py-3 px-4 whitespace-nowrap text-xs">
+                                          {new Date(record.tanggal).toLocaleDateString('id-ID', { 
+                                            weekday: 'short', 
+                                            year: 'numeric', 
+                                            month: 'short', 
+                                            day: 'numeric' 
+                                          })}
+                                        </TableCell>
+                                        <TableCell className="py-3 px-4 text-xs">
+                                          {record.created_at ? 
+                                            new Date(record.created_at).toLocaleTimeString('id-ID', { 
+                                              hour: '2-digit', 
+                                              minute: '2-digit' 
+                                            }) : 
+                                            '-'
+                                          }
+                                        </TableCell>
+                                        <TableCell className="py-3 px-4">
+                                          <div className="space-y-1">
+                                            {record.hafalan_surah && (
+                                              <p className="text-sm">
+                                                <span className="font-medium text-red-600">Hafalan:</span> {record.hafalan_surah}
+                                              </p>
+                                            )}
+                                            {(record.tilawah_surah || record.tilawah_ayat) && (
+                                              <p className="text-sm">
+                                                <span className="font-medium text-amber-500">Tilawah:</span> {record.tilawah_surah} {record.tilawah_ayat && `ayat ${record.tilawah_ayat}`}
+                                              </p>
+                                            )}
+                                            {record.jilid_buku && (
+                                              <p className="text-sm">
+                                                <span className="font-medium text-blue-600">Jilid:</span> {record.jilid_buku} Hal.{record.jilid_halaman}
+                                              </p>
+                                            )}
+                                            {!record.hafalan_surah && !record.tilawah_surah && !record.jilid_buku && (
+                                              <span className="text-gray-400 text-sm">-</span>
+                                            )}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="py-3 px-4 max-w-[250px]">
+                                          <div className="space-y-1">
+                                            {record.tugas_rumah && (
+                                              <p className="text-sm">
+                                                <span className="font-medium">Tugas:</span> {record.tugas_rumah}
+                                              </p>
+                                            )}
+                                            {record.catatan_guru && (
+                                              <p className="text-sm text-gray-600">{record.catatan_guru}</p>
+                                            )}
+                                            {!record.tugas_rumah && !record.catatan_guru && (
+                                              <span className="text-gray-400 text-sm">-</span>
+                                            )}
+                                          </div>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
                                   </TableBody>
                                 </Table>
                               </div>

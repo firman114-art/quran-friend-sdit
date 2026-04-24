@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, CheckCircle2, ArrowLeft, Users, CalendarDays } from 'lucide-react';
+import { Calendar, CheckCircle2, ArrowLeft, Users, CalendarDays, Filter, Loader2, Search, Table2, FileX } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -32,6 +32,27 @@ interface AbsensiRecord {
   keterangan: string;
 }
 
+interface AbsensiHarianRow {
+  id: string;
+  siswa_id: string;
+  kelas_id: string;
+  tanggal: string;
+  status: 'hadir' | 'sakit' | 'izin' | 'alpa';
+  keterangan: string | null;
+  created_at: string;
+}
+
+interface RekapAbsensi {
+  siswaId: string;
+  nama: string;
+  hadir: number;
+  sakit: number;
+  izin: number;
+  alpa: number;
+  total: number;
+  persentase: number;
+}
+
 const InputAbsensiSiswa = () => {
   const navigate = useNavigate();
   const { profile, guruData, loading } = useAuth();
@@ -44,6 +65,14 @@ const InputAbsensiSiswa = () => {
   const [absensiData, setAbsensiData] = useState<Record<string, AbsensiRecord>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // State untuk tab dan rekap
+  const [activeTab, setActiveTab] = useState<'input' | 'rekap'>('input');
+  const [selectedSemester, setSelectedSemester] = useState<string>('');
+  const [selectedBulan, setSelectedBulan] = useState<string>('');
+  const [selectedKelasRekap, setSelectedKelasRekap] = useState<string>('');
+  const [rekapData, setRekapData] = useState<RekapAbsensi[]>([]);
+  const [isLoadingRekap, setIsLoadingRekap] = useState(false);
 
   useEffect(() => {
     if (!loading && (!profile || profile.role !== 'guru')) {
@@ -347,6 +376,115 @@ const InputAbsensiSiswa = () => {
   const countHadir = Object.values(absensiData).filter((a) => a.hadir).length;
   const countTidakHadir = Object.values(absensiData).filter((a) => !a.hadir).length;
 
+  // Fungsi untuk mengambil data rekap absensi
+  const fetchRekapAbsensi = async () => {
+    if (!selectedKelasRekap || !selectedSemester) {
+      toast({
+        title: 'Filter Belum Lengkap',
+        description: 'Silakan pilih semester dan kelas terlebih dahulu',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoadingRekap(true);
+    try {
+      // Ambil siswa dari kelas yang dipilih
+      const { data: studentsData, error: studentsError } = await supabase
+        .from('siswa')
+        .select('id, nama')
+        .eq('kelas_id', selectedKelasRekap);
+
+      if (studentsError) throw studentsError;
+      if (!studentsData || studentsData.length === 0) {
+        setRekapData([]);
+        setIsLoadingRekap(false);
+        return;
+      }
+
+      // Tentukan range tanggal berdasarkan semester dan bulan
+      const year = new Date().getFullYear();
+      let startDate: string;
+      let endDate: string;
+
+      if (selectedSemester === 'ganjil') {
+        startDate = `${year}-07-01`;
+        endDate = `${year}-12-31`;
+      } else {
+        startDate = `${year}-01-01`;
+        endDate = `${year}-06-30`;
+      }
+
+      // Jika bulan dipilih, override range
+      if (selectedBulan) {
+        const month = parseInt(selectedBulan);
+        const monthStr = month.toString().padStart(2, '0');
+        startDate = `${year}-${monthStr}-01`;
+        endDate = `${year}-${monthStr}-${new Date(year, month, 0).getDate()}`;
+      }
+
+      // Ambil data absensi dari absensi_harian
+      const studentIds = studentsData.map((s) => s.id);
+      const { data: absensiData, error: absensiError } = await (supabase as any)
+        .from('absensi_harian')
+        .select('siswa_id, status, tanggal')
+        .in('siswa_id', studentIds)
+        .gte('tanggal', startDate)
+        .lte('tanggal', endDate);
+
+      if (absensiError) throw absensiError;
+
+      // Hitung rekap per siswa
+      const rekap: RekapAbsensi[] = studentsData.map((student) => {
+        const studentAbsensi =
+          absensiData?.filter((a: AbsensiHarianRow) => a.siswa_id === student.id) || [];
+        const hadir = studentAbsensi.filter(
+          (a: AbsensiHarianRow) => a.status === 'hadir'
+        ).length;
+        const sakit = studentAbsensi.filter(
+          (a: AbsensiHarianRow) => a.status === 'sakit'
+        ).length;
+        const izin = studentAbsensi.filter(
+          (a: AbsensiHarianRow) => a.status === 'izin'
+        ).length;
+        const alpa = studentAbsensi.filter(
+          (a: AbsensiHarianRow) => a.status === 'alpa'
+        ).length;
+        const total = studentAbsensi.length;
+        const persentase = total > 0 ? Math.round((hadir / total) * 100) : 0;
+
+        return {
+          siswaId: student.id,
+          nama: student.nama,
+          hadir,
+          sakit,
+          izin,
+          alpa,
+          total,
+          persentase,
+        };
+      });
+
+      // Sort berdasarkan persentase kehadiran (tertinggi ke terendah)
+      rekap.sort((a, b) => b.persentase - a.persentase);
+
+      setRekapData(rekap);
+      toast({
+        title: 'Data Rekap Diambil',
+        description: `Berhasil mengambil data ${rekap.length} siswa`,
+      });
+    } catch (error: any) {
+      console.error('Error fetching rekap:', error);
+      toast({
+        title: 'Gagal Mengambil Data',
+        description: error.message || 'Terjadi kesalahan saat mengambil data rekap',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingRekap(false);
+    }
+  };
+
   if (loading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -371,43 +509,65 @@ const InputAbsensiSiswa = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        {/* Filter Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <CalendarDays className="w-4 h-4" />
-              Pilih Kelas dan Tanggal
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Kelas</Label>
-                <Select value={selectedKelas} onValueChange={setSelectedKelas}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih kelas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {kelasList.map((kelas) => (
-                      <SelectItem key={kelas.id} value={kelas.id}>
-                        {kelas.nama_kelas}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-6">
+          <Button
+            variant={activeTab === 'input' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('input')}
+            className={activeTab === 'input' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
+          >
+            <CalendarDays className="w-4 h-4 mr-2" />
+            Input Absen Hari Ini
+          </Button>
+          <Button
+            variant={activeTab === 'rekap' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('rekap')}
+            className={activeTab === 'rekap' ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Rekap Absensi
+          </Button>
+        </div>
 
-              <div className="space-y-2">
-                <Label>Tanggal</Label>
-                <Input
-                  type="date"
-                  value={tanggal}
-                  onChange={(e) => setTanggal(e.target.value)}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {activeTab === 'input' ? (
+          <>
+            {/* Filter Section - Input */}
+            <Card className="mb-6 border-red-200">
+              <CardHeader className="bg-red-50">
+                <CardTitle className="text-base flex items-center gap-2 text-red-700">
+                  <CalendarDays className="w-4 h-4" />
+                  Pilih Kelas dan Tanggal
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Kelas</Label>
+                    <Select value={selectedKelas} onValueChange={setSelectedKelas}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih kelas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {kelasList.map((kelas) => (
+                          <SelectItem key={kelas.id} value={kelas.id}>
+                            {kelas.nama_kelas}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Tanggal</Label>
+                    <Input
+                      type="date"
+                      value={tanggal}
+                      onChange={(e) => setTanggal(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
         {students.length > 0 && (
           <>
@@ -544,9 +704,159 @@ const InputAbsensiSiswa = () => {
             </CardContent>
           </Card>
         )}
-      </main>
-    </div>
-  );
+      </>
+    ) : (
+      <>
+        {/* Filter Section - Rekap */}
+        <Card className="mb-6 border-amber-200">
+          <CardHeader className="bg-amber-50">
+            <CardTitle className="text-base flex items-center gap-2 text-amber-700">
+              <Filter className="w-4 h-4" />
+              Filter Rekap Absensi
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Semester</Label>
+                <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih semester" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ganjil">Ganjil (Jul-Des)</SelectItem>
+                    <SelectItem value="genap">Genap (Jan-Jun)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Bulan (Opsional)</Label>
+                <Select value={selectedBulan} onValueChange={setSelectedBulan}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Semua Bulan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Semua Bulan</SelectItem>
+                    <SelectItem value="1">Januari</SelectItem>
+                    <SelectItem value="2">Februari</SelectItem>
+                    <SelectItem value="3">Maret</SelectItem>
+                    <SelectItem value="4">April</SelectItem>
+                    <SelectItem value="5">Mei</SelectItem>
+                    <SelectItem value="6">Juni</SelectItem>
+                    <SelectItem value="7">Juli</SelectItem>
+                    <SelectItem value="8">Agustus</SelectItem>
+                    <SelectItem value="9">September</SelectItem>
+                    <SelectItem value="10">Oktober</SelectItem>
+                    <SelectItem value="11">November</SelectItem>
+                    <SelectItem value="12">Desember</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Kelas</Label>
+                <Select value={selectedKelasRekap} onValueChange={setSelectedKelasRekap}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih kelas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {kelasList.map((kelas) => (
+                      <SelectItem key={kelas.id} value={kelas.id}>
+                        {kelas.nama_kelas}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <Button
+              onClick={fetchRekapAbsensi}
+              disabled={isLoadingRekap}
+              className="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white"
+            >
+              {isLoadingRekap ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Search className="w-4 h-4 mr-2" />
+              )}
+              Tampilkan Rekap
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Tabel Rekap */}
+        {rekapData.length > 0 && (
+          <Card className="border-amber-200">
+            <CardHeader className="bg-amber-50">
+              <CardTitle className="text-base flex items-center gap-2 text-amber-700">
+                <Table2 className="w-4 h-4" />
+                Data Rekap Absensi
+                {selectedBulan && (
+                  <span className="text-xs font-normal ml-2">
+                    (Bulan: {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][parseInt(selectedBulan) - 1]})
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Siswa</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase text-green-600">Hadir</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase text-yellow-600">Sakit</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase text-blue-600">Izin</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase text-red-600">Alpa</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Persentase</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {rekapData.map((item, index) => (
+                      <tr key={item.siswaId} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm">{index + 1}</td>
+                        <td className="px-4 py-3 text-sm font-medium">{item.nama}</td>
+                        <td className="px-4 py-3 text-sm text-center font-semibold text-green-600">{item.hadir}</td>
+                        <td className="px-4 py-3 text-sm text-center font-semibold text-yellow-600">{item.sakit}</td>
+                        <td className="px-4 py-3 text-sm text-center font-semibold text-blue-600">{item.izin}</td>
+                        <td className="px-4 py-3 text-sm text-center font-semibold text-red-600">{item.alpa}</td>
+                        <td className="px-4 py-3 text-sm text-center">
+                          <span className={`font-semibold ${
+                            item.persentase >= 90 ? 'text-green-600' :
+                            item.persentase >= 70 ? 'text-amber-500' :
+                            'text-red-600'
+                          }`}>
+                            {item.persentase}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {rekapData.length === 0 && !isLoadingRekap && selectedSemester && (
+          <Card>
+            <CardContent className="py-8 text-center">
+              <FileX className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">Tidak ada data absensi untuk periode yang dipilih</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Pastikan semester dan kelas sudah dipilih, lalu klik "Tampilkan Rekap"
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </>
+    )}
+  </main>
+</div>
+);
 };
 
 export default InputAbsensiSiswa;
