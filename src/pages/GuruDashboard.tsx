@@ -663,123 +663,112 @@ const GuruDashboard = () => {
                                 </div>
                               )}
                             </CardContent>
-                                              <TableCell className="py-3 px-4 font-medium">
-                                                {student?.nama || 'Unknown'}
-                                              </TableCell>
-                                              <TableCell className="py-3 px-4">
-                                                {jurnal.hafalan_surah ? (
-                                                  <div className="leading-relaxed">
-                                                    <span className="font-medium">{jurnal.hafalan_surah}</span>
-                                                    {jurnal.hafalan_ayat && <span className="text-gray-600"> {jurnal.hafalan_ayat}</span>}
-                                                  </div>
-                                                ) : <span className="text-gray-400">-</span>}
-                                              </TableCell>
-                                              <TableCell className="py-3 px-4">
-                                                {jurnal.tilawah_surah ? (
-                                                  <div className="leading-relaxed">
-                                                    <span className="font-medium">{jurnal.tilawah_surah}</span>
-                                                    {jurnal.tilawah_ayat && <span className="text-gray-600"> {jurnal.tilawah_ayat}</span>}
-                                                  </div>
-                                                ) : <span className="text-gray-400">-</span>}
-                                              </TableCell>
-                                              <TableCell className="py-3 px-4">
-                                                {jurnal.jilid_buku ? (
-                                                  <div className="leading-relaxed">
-                                                    <div>
-                                                      <span className="font-medium">{jurnal.jilid_buku}</span>
-                                                      <span className="text-gray-600"> Hal.{jurnal.jilid_halaman}</span>
-                                                    </div>
-                                                    {(jurnal.jilid_kesalahan_tajwid || jurnal.jilid_kesalahan_kelancaran || jurnal.jilid_kesalahan_fasohah) && (
-                                                      <div className="text-xs text-gray-500 mt-1 space-x-2">
-                                                        <span>Tajwid: {jurnal.jilid_kesalahan_tajwid || 0}</span>
-                                                        <span>Kelancaran: {jurnal.jilid_kesalahan_kelancaran || 0}</span>
-                                                        <span>Fasohah: {jurnal.jilid_kesalahan_fasohah || 0}</span>
-                                                      </div>
-                                                    )}
-                                                  </div>
-                                                ) : <span className="text-gray-400">-</span>}
-                                              </TableCell>
-                                              <TableCell className="py-3 px-4 max-w-[200px]">
-                                                {jurnal.catatan ? (
-                                                  <p className="text-sm leading-relaxed text-gray-700">{jurnal.catatan}</p>
-                                                ) : <span className="text-gray-400">-</span>}
-                                              </TableCell>
-                                            </TableRow>
-                                          );
-                                        })}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
-                                )}
-                                
-                                {/* Tombol Tutup di bagian bawah tabel */}
-                                {filteredJurnalRumah.length > 0 && (
-                                  <div className="mt-4 flex justify-center">
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      onClick={() => setExpandJurnalRumah(false)}
-                                      className="text-muted-foreground hover:bg-gray-100"
-                                    >
-                                      <ChevronUp className="w-4 h-4 mr-1" /> Tutup Tabel
-                                    </Button>
-                                  </div>
-                                )}
-                              </CardContent>
+                            <div className="px-6 pb-6">
+                              <Button
+                                variant="outline"
+                                onClick={() => setExpandJurnalSekolah(false)}
+                                className="w-full"
+                              >
+                                Tutup Jurnal
+                              </Button>
                             </div>
-                          </Card>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                          </>
+                        )}
+                      </Card>
+                    );
+                  })()}
 
-            {tab === 'jurnal' && (
-              <>
-                <div className="flex gap-2 mb-4">
-                  <Button 
-                    size="sm" 
-                    className="gradient-hero text-primary-foreground flex-1" 
-                    onClick={() => setShowJurnalKelasForm(true)}
+                  {/* Jurnal */}
+                  <Card className="border rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <ClipboardList className="w-4 h-4" />
+                          Jurnal Kelas
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowJurnalForm(!showJurnalForm)}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            {showJurnalForm ? 'Tutup Form' : 'Tambah Jurnal'}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    {showJurnalForm && (
+                      <div className="border-t">
+                        <CardContent className="pt-4">
+                          <JurnalKelasForm
+                            kelasId={selectedKelas}
+                            onSuccess={() => {
+                              setShowJurnalForm(false);
+                              fetchJurnals();
+                              fetchStudentsAndRecords();
+                            }}
+                          />
+                        </CardContent>
+                      </div>
+                    )}
+                  </Card>
+
+                  <JurnalRecap
+                    jurnals={jurnals}
+                    kelasNama={currentKelas.nama_kelas}
+                    onDelete={async (id) => {
+                      const { error } = await supabase
+                        .from('jurnal_kelas' as any)
+                        .delete()
+                        .eq('id', id);
+                      if (error) {
+                        toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+                      } else {
+                        toast({ title: 'Berhasil', description: 'Jurnal telah dihapus.' });
+                        fetchJurnals();
+                      }
+                    }}
+                  />
+                </>
+              )}
+
+              {tab === 'absensi' && (
+                <div className="space-y-4">
+                  <Button
+                    onClick={() => navigate('/input-absensi')}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white py-6"
                   >
-                    <Plus className="w-4 h-4 mr-1" /> Tambah Jurnal
+                    <ClipboardList className="w-5 h-5 mr-2" />
+                    Buka Menu Input Absensi
                   </Button>
                 </div>
-                <JurnalRecap
-                  jurnals={jurnals}
-                  kelasNama={currentKelas.nama_kelas}
-                  onDelete={async (id) => {
-                    const { error } = await supabase
-                      .from('jurnal_kelas' as any)
-                      .delete()
-                      .eq('id', id);
-                    if (error) {
-                      toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
-                    } else {
-                      toast({ title: 'Berhasil', description: 'Jurnal telah dihapus.' });
-                      fetchJurnals();
-                    }
-                  }}
-                />
-              </>
-            )}
-          </>
-        )}
+              )}
+            </>
+          )}
 
-        {!currentKelas && kelasList.length === 0 && (
-          <Card className="border-0 shadow-sm">
-            <CardContent className="p-8 text-center">
-              <FolderPlus className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">Buat kelas terlebih dahulu untuk mulai menambahkan murid.</p>
-              <Button className="mt-4 gradient-hero text-primary-foreground" onClick={() => setShowAddKelas(true)}>
-                <FolderPlus className="w-4 h-4 mr-2" /> Buat Kelas
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </main>
+          {!currentKelas && kelasList.length > 0 && (
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-8 text-center">
+                <School className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">Pilih kelas untuk melihat detail</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {!currentKelas && kelasList.length === 0 && (
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-8 text-center">
+                <FolderPlus className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">Buat kelas terlebih dahulu untuk mulai menambahkan murid.</p>
+              </CardContent>
+            </Card>
+          )}
+        </main>
+      </div>
+    </div>
+  );
 
       {showForm && selectedStudent && guruData && (
         <DailyInputForm
