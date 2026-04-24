@@ -77,6 +77,7 @@ interface ClassStudent {
   hafalanMumtaz: number;
   tilawahMumtaz: number;
   jilidMumtaz: number;
+  kehadiranCount: number;
   totalRecords: number;
 }
 
@@ -195,6 +196,8 @@ const MuridDetail = () => {
             const tilawahMumtaz = monthlyRecords.filter(r => r.tilawah_predikat === 'A' || r.tilawah_predikat === 'Mumtaz').length;
             const jilidMumtaz = monthlyRecords.filter(r => r.jilid_predikat === 'A' || r.jilid_predikat === 'Mumtaz').length;
             const totalMumtaz = hafalanMumtaz + tilawahMumtaz + jilidMumtaz;
+            // Hitung kehadiran bulanan
+            const kehadiranCount = monthlyRecords.length;
             return {
               id: s.id,
               nama: s.nama,
@@ -202,9 +205,16 @@ const MuridDetail = () => {
               hafalanMumtaz,
               tilawahMumtaz,
               jilidMumtaz,
+              kehadiranCount,
               totalRecords: monthlyRecords.length
             };
-          }).sort((a, b) => b.mumtazCount - a.mumtazCount).slice(0, 3); // Top 3
+          }).sort((a, b) => {
+            // Sort berdasarkan total Mumtaz, jika sama bandingkan kehadiran
+            if (b.mumtazCount !== a.mumtazCount) {
+              return b.mumtazCount - a.mumtazCount;
+            }
+            return b.kehadiranCount - a.kehadiranCount;
+          }).slice(0, 3); // Top 3
           
           setClassStudents(studentsWithStats);
         }
@@ -301,13 +311,27 @@ const MuridDetail = () => {
 
   // Calculate monthly attendance data from daily_records (legacy)
   // Hitung kehadiran dari absensi_harian (prioritas) atau daily_records (fallback)
+  // dengan sistem reset bulanan
   const getKehadiranCount = () => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
     if (absensiHarian.length > 0) {
-      // Hitung dari absensi_harian - hanya yang statusnya 'hadir'
-      return absensiHarian.filter(a => a.status === 'hadir').length;
+      // Hitung dari absensi_harian - hanya yang statusnya 'hadir' dan bulan ini
+      return absensiHarian.filter(a => {
+        const recordDate = new Date(a.tanggal);
+        return a.status === 'hadir' && 
+               recordDate.getMonth() === currentMonth && 
+               recordDate.getFullYear() === currentYear;
+      }).length;
     }
-    // Fallback ke daily_records
-    return records.length;
+    // Fallback ke daily_records - hanya bulan ini
+    return records.filter(r => {
+      const recordDate = new Date(r.tanggal);
+      return recordDate.getMonth() === currentMonth && 
+             recordDate.getFullYear() === currentYear;
+    }).length;
   };
 
   const monthlyData = (() => {
@@ -722,7 +746,7 @@ const MuridDetail = () => {
           {classStudents.length > 0 && (
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">🏆 Siswa Terbaik Bulan Ini - Kelas {siswa?.kelas}</CardTitle>
+                <CardTitle className="text-base">🏆 Siswa Terbaik Bulan Ini (Mumtaz + Kehadiran)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {classStudents.map((s, index) => (
@@ -738,6 +762,7 @@ const MuridDetail = () => {
                       <span className="text-[10px] text-muted-foreground block">
                         🕌{s.hafalanMumtaz} 📖{s.tilawahMumtaz} 📕{s.jilidMumtaz}
                       </span>
+                      <span className="text-xs text-muted-foreground block">📊 {s.kehadiranCount} kehadiran</span>
                       <span className="text-xs text-muted-foreground block">{s.totalRecords} pertemuan</span>
                     </div>
                   </div>
