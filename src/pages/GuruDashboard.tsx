@@ -9,12 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Search, LogOut, UserCircle, FileText, BookOpen, Users, Home, Calendar, ChevronDown, ChevronUp, Trash2, FileSpreadsheet, School, FolderPlus, ClipboardList, UserPlus, Check, Clock } from 'lucide-react';
+import { Plus, Search, LogOut, UserCircle, FileText, BookOpen, Users, Calendar, ChevronDown, ChevronUp, Trash2, FileSpreadsheet, School, FolderPlus, ClipboardList, UserPlus, Check, Clock } from 'lucide-react';
 import DailyInputForm from '@/components/DailyInputForm';
 import AddStudentForm from '@/components/AddStudentForm';
 import MonthlyRecap from '@/components/MonthlyRecap';
 import JurnalRecap from '@/components/JurnalRecap';
-import JurnalRumahRecap from '@/components/JurnalRumahRecap';
 import JurnalKelasForm from '@/components/JurnalKelasForm';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
@@ -660,97 +659,10 @@ const GuruDashboard = () => {
                                   <ChevronUp className="w-4 h-4 mr-1" /> Tutup Tabel
                                 </Button>
                               </div>
-                            </CardContent>
-                          </div>
-                        </Card>
-                      )}
-
-                      {/* Jurnal Rumah - Collapsible dengan Preview */}
-                      {(() => {
-                        console.log('DEBUG Jurnal Rumah - jurnalRumah length:', jurnalRumah.length);
-                        console.log('DEBUG Jurnal Rumah - kelasStudentIds length:', kelasStudentIds.length);
-                        console.log('DEBUG Jurnal Rumah - first few jurnal siswa_ids:', jurnalRumah.slice(0, 3).map(j => j.siswa_id));
-                        const filteredJurnalRumah = jurnalRumah.filter(j => {
-                          const isIncluded = kelasStudentIds.includes(j.siswa_id);
-                          console.log('DEBUG - checking siswa_id:', j.siswa_id, 'included:', isIncluded);
-                          return isIncluded;
-                        });
-                        console.log('DEBUG Jurnal Rumah - filtered count:', filteredJurnalRumah.length);
-                        return (
-                          <Card className="border rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-                            <CardHeader 
-                              className="pb-2 cursor-pointer hover:bg-gray-50 transition-colors"
-                              onClick={() => setExpandJurnalRumah(!expandJurnalRumah)}
-                            >
-                              <CardTitle className="text-base flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Home className="w-4 h-4 text-success" />
-                                  Jurnal Rumah (Orang Tua)
-                                  <span className="text-xs bg-success/10 text-success px-2 py-0.5 rounded-full">
-                                    {filteredJurnalRumah.length} data
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs text-muted-foreground">
-                                    {expandJurnalRumah ? 'Sembunyikan' : 'Lihat Detail'}
-                                  </span>
-                                  {expandJurnalRumah ? (
-                                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                                  ) : (
-                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
                                   )}
                                 </div>
-                              </CardTitle>
-                            </CardHeader>
-                            
-                            {/* Preview 1 baris terakhir saat tertutup */}
-                            {!expandJurnalRumah && filteredJurnalRumah.length > 0 && (() => {
-                              const latestJurnal = filteredJurnalRumah[0];
-                              const student = students.find(s => s.id === latestJurnal.siswa_id);
-                              return (
-                                <CardContent className="pt-0 pb-3">
-                                  <div className="bg-green-50/50 rounded-lg p-3 border border-green-100">
-                                    <p className="text-xs text-green-600 font-medium mb-1">🏠 Entri Terbaru:</p>
-                                    <p className="text-sm text-gray-800">
-                                      <span className="font-medium">{student?.nama || 'Unknown'}</span>
-                                      <span className="text-gray-500"> • {new Date(latestJurnal.tanggal).toLocaleDateString('id-ID')}</span>
-                                      {latestJurnal.hafalan_surah && (
-                                        <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                                          {latestJurnal.hafalan_surah}
-                                        </span>
-                                      )}
-                                    </p>
-                                  </div>
-                                </CardContent>
-                              );
-                            })()}
-                            <div className={`overflow-hidden transition-all duration-500 ease-in-out ${expandJurnalRumah ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                              <CardContent className="pt-0">
-                                {filteredJurnalRumah.length === 0 ? (
-                                  <p className="text-sm text-muted-foreground text-center py-4">
-                                    Belum ada jurnal rumah dari siswa kelas ini.
-                                  </p>
-                                ) : (
-                                  <div className="overflow-x-auto rounded-lg border">
-                                    <Table className="border-0">
-                                      <TableHeader className="sticky top-0 z-10">
-                                        <TableRow className="bg-gray-100">
-                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Tanggal</TableHead>
-                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Nama Murid</TableHead>
-                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Hafalan</TableHead>
-                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Tilawah</TableHead>
-                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Jilid</TableHead>
-                                          <TableHead className="border-b border-gray-200 py-3 px-4 text-xs font-semibold text-gray-700">Catatan</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {filteredJurnalRumah.map((jurnal, index) => {
-                                          const student = students.find(s => s.id === jurnal.siswa_id);
-                                          return (
-                                            <TableRow key={jurnal.id} className={`text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-green-50/50 transition-colors`}>
-                                              <TableCell className="py-3 px-4 whitespace-nowrap text-xs">
-                                                {new Date(jurnal.tanggal).toLocaleDateString('id-ID')}
-                                              </TableCell>
+                              )}
+                            </CardContent>
                                               <TableCell className="py-3 px-4 font-medium">
                                                 {student?.nama || 'Unknown'}
                                               </TableCell>
@@ -835,8 +747,8 @@ const GuruDashboard = () => {
                     <Plus className="w-4 h-4 mr-1" /> Tambah Jurnal
                   </Button>
                 </div>
-                <JurnalRecap 
-                  jurnals={jurnals} 
+                <JurnalRecap
+                  jurnals={jurnals}
                   kelasNama={currentKelas.nama_kelas}
                   onDelete={async (id) => {
                     const { error } = await supabase
@@ -851,17 +763,6 @@ const GuruDashboard = () => {
                     }
                   }}
                 />
-
-                {/* Rekap Jurnal Rumah - Dibuat oleh Orang Tua */}
-                {jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id)).length > 0 && (
-                  <div className="mt-6">
-                    <JurnalRumahRecap
-                      jurnals={jurnalRumah.filter(j => kelasStudentIds.includes(j.siswa_id))}
-                      students={students}
-                      kelasNama={currentKelas?.nama_kelas || ''}
-                    />
-                  </div>
-                )}
               </>
             )}
           </>
