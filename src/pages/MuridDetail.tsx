@@ -151,7 +151,7 @@ const MuridDetail = () => {
         setSiswa(siswaData);
         // Fetch jurnal_kelas for this class to get tugas_rumah (gunakan kelas_id UUID)
         const siswaKelasId = siswaData.kelas_id || siswaData.kelas; // fallback ke nama kelas jika kelas_id null
-        const { data: jurnalData } = await supabase.from('jurnal_kelas' as any).select('id, kelas_id, tanggal, tugas_rumah').eq('kelas_id', siswaKelasId);
+        const { data: jurnalData } = await supabase.from('jurnal_kelas' as any).select('id, kelas_id, tanggal, tugas_rumah').eq('kelas_id', siswaKelasId).order('tanggal', { ascending: false }).limit(1);
         if (jurnalData) setJurnalKelas(jurnalData as any);
         
         // Fetch tugas rumah terbaru untuk kelas ini (gunakan kelas_id UUID)
@@ -523,10 +523,11 @@ const MuridDetail = () => {
                   <CardTitle className="text-base">📋 Tugas Rumah dari Guru</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  <div className="space-y-3">
                     {jurnalKelas
                       .filter(j => j.tugas_rumah)
                       .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())
+                      .slice(0, 1)
                       .map((j) => (
                         <div key={j.id} className="bg-amber-50 rounded-lg p-3 border border-amber-100">
                           <div className="flex items-start justify-between gap-2">
