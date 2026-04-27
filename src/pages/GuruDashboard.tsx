@@ -659,9 +659,6 @@ const GuruDashboard = () => {
                                   <ChevronUp className="w-4 h-4 mr-1" /> Tutup Tabel
                                 </Button>
                               </div>
-                                  )}
-                                </div>
-                              )}
                             </CardContent>
                             <div className="px-6 pb-6">
                               <Button
