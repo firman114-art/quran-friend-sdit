@@ -656,9 +656,9 @@ const GuruDashboard = () => {
                               </Button>
                             </div>
                           </div>
-                        </Card>
+                                              </Card>
+                                           )}
                      )}
-                   )}
 
                     {/* Jurnal */}
                     <Card className="border rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
@@ -805,7 +805,9 @@ export default GuruDashboard;
  
  
  
-   
+  
+ 
  // Deploy fix
-/ /   D e p l o y   f i x  
+/ /   D e p l o y   f i x 
+ 
  
