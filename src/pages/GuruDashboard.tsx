@@ -551,26 +551,12 @@ const GuruDashboard = () => {
                           </CardHeader>
                           
                           {/* Preview 1 baris terakhir saat tertutup */}
-                          {!expandJurnalSekolah && kelasRecords.length > 0 && (() => {
-                            const latestRecord = kelasRecords[0];
-                            const student = students.find(s => s.id === latestRecord.siswa_id);
-                            return (
-                              <CardContent className="pt-0 pb-3">
-                                <div className="bg-blue-50/50 rounded-lg p-3 border border-blue-100">
-                                  <p className="text-xs text-blue-600 font-medium mb-1">📝 Entri Terbaru:</p>
-                                  <p className="text-sm text-gray-800">
-                                    <span className="font-medium">{student?.nama || 'Unknown'}</span>
-                                    <span className="text-gray-500"> • {new Date(latestRecord.tanggal).toLocaleDateString('id-ID')}</span>
-                                    {latestRecord.hafalan_surah && (
-                                      <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                                        {latestRecord.hafalan_surah}
-                                      </span>
-                                    )}
-                                  </p>
-                                </div>
-                              </CardContent>
-                            );
-                          })()}
+                          {!expandJurnalSekolah && kelasRecords.length > 0 && (
+                            <PreviewSection 
+                              latestRecord={kelasRecords[0]}
+                              students={students}
+                            />
+                          )}
                           <div className={`overflow-hidden transition-all duration-500 ease-in-out ${expandJurnalSekolah ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                             <CardContent className="pt-0">
                               <div className="overflow-x-auto rounded-lg border">
