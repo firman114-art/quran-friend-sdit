@@ -669,13 +669,29 @@ const GuruDashboard = () => {
                                 Tutup Jurnal
                               </Button>
                             </div>
-                          </>
-                        )}
-                      </Card>
-                    );
-                  })()}
+                          </div>
+                        </Card>
+                      );
+                    })()}
 
-                  {/* Jurnal */}
+                    {/* Jurnal */}
+                    <Card className="border rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <ClipboardList className="w-4 h-4" />
+                            Jurnal Kelas
+                          </CardTitle>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowJurnalForm(!showJurnalForm)}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              {showJurnalForm ? 'Tutup Form' : 'Tambah Jurnal'}
+                            </Button>
+                          </div>
                   <Card className="border rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
