@@ -657,7 +657,7 @@ const GuruDashboard = () => {
                             </div>
                           </div>
                         </Card>
-                      );
+                     )}
                    )}
 
                     {/* Jurnal */}
